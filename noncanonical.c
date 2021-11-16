@@ -10,16 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BAUDRATE B38400
-#define _POSIX_SOURCE 1 /* POSIX compliant source */
-#define FALSE 0
-#define TRUE 1
-
-#define FLAG 0x7E
-#define A_SENDER 0x03
-#define A_RECEIVER 0x01
-#define C_UA 0x07
-#define C_SET 0x03
+#include "common.h"
 
 volatile int STOP=FALSE;
 
@@ -66,7 +57,7 @@ int main(int argc, char** argv)
 
   /* 
     VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    leitura do(s) próximo(s) caracter(es)
+    leitura do(s) prï¿½ximo(s) caracter(es)
   */
 
 
@@ -80,45 +71,38 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 
-
-//    while (STOP==FALSE) {       /* loop for input */
-//      res = read(fd,buf,1);   /* returns after 5 chars have been input */
-//      buf[res]=0;               /* so we can printf... */
-//      printf(":%s:%d\n", buf, res);
-//      if (buf[res-1]==0) STOP=TRUE;
-//    }
+    /*
+    while (STOP==FALSE) {       // loop for input
+    res = read(fd,buf,1);   // returns after 5 chars have been input 
+    buf[res]=0;               // so we can printf... 
+    printf(":%s:%d\n", buf, res);
+    if (buf[res-1]==0) STOP=TRUE;
+    }
+    */
 
     int count = 0;
-    unsigned char set[5];
-    while (STOP==FALSE) {
-        res = read(fd, buf, 1);
-        printf("a");
-        buf[res] = 0;
-        set[count] = res;
-        printf("Received %d byte: %02X\n", res, buf[0]);
-        set[count] = buf[0];
-        count++;
-        if (count == 5) STOP=TRUE;
+    int received = FALSE;
+    unsigned char packet[5];
+    while(!received){
+      while (STOP==FALSE && !received) {
+          res = read(fd, buf, 1);
+          if(res){
+            packet[count] = buf[0];
+            printf("Received %d byte: %02X\n", res, buf[0]);
+            count++;
+          }
+          if (count == 5) STOP = TRUE;
+      }
+      
+      if (make_bcc(packet, 5) == packet[3]) {
+          received = TRUE;
+          write_receiver_ua(fd);
+          printf("Sent UA\n");
+      }
+      else{
+        STOP = FALSE;
+      }
     }
-    
-    unsigned char ua[5];
-    ua[0] = FLAG;
-    ua[1] = A_RECEIVER;
-    ua[2] = C_UA;
-    unsigned char bcc_ua = C_UA ^ A_RECEIVER;
-    ua[3] = bcc_ua;
-    ua[4] = FLAG;
-
-    if (set[3] == set[1] ^ set[2]) {
-        res = write(fd, ua, 5);
-        printf("Sent UA");
-    }
-
-
-
-  /* 
-    O ciclo WHILE deve ser alterado de modo a respeitar o indicado no guião 
-  */
 
     
     tcsetattr(fd,TCSANOW,&oldtio);

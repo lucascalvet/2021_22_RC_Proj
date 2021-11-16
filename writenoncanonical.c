@@ -9,22 +9,16 @@
 #include <strings.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
-#define BAUDRATE B38400
-#define MODEMDEVICE "/dev/ttyS1"
-#define _POSIX_SOURCE 1 /* POSIX compliant source */
-#define FALSE 0
-#define TRUE 1
-
-#define FLAG 0x7E
-#define A_SENDER 0x03
-#define A_RECEIVER 0x01
-#define C_UA 0x07
-#define C_SET 0x03
+#include "common.h"
 
 volatile int STOP = FALSE;
 //int fd;
 
+int alarm_set = FALSE;
+
+/*
 int llopen(char *port_name)
 {
   int fd = open(port_name, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -52,22 +46,6 @@ int llread(int fd, unsigned char flag, int timeout_secs, unsigned char *packet)
       flag_count++;
     count++;
   }
-}
-
-int write_set(int fd)
-{
-  unsigned char set[5];
-  set[0] = FLAG;
-  set[1] = A_SENDER;
-  set[2] = C_SET;
-  unsigned char bcc_set = C_SET ^ A_SENDER;
-  set[3] = bcc_set;
-  set[4] = FLAG;
-
-  int res = write(fd, set, 5);
-  printf("%d bytes written\n", res);
-
-  return 0;
 }
 
 int llwrite(int fd, unsigned char *data, int idle_secs, int retries)
@@ -100,12 +78,30 @@ int llwrite(int fd, unsigned char *data, int idle_secs, int retries)
 
   
 
-  
-
   return 0;
 }
+*/
 
-//char bcc_calculator()
+
+
+/*int write_data(int fd) {
+  unsigned char data[??];
+  data[0] = FLAG;
+  data[1] = A_SENDER;
+  data[2] = C_SET;
+  unsigned char bcc_set = C_SET ^ A_SENDER;
+  data[3] = bcc_set;
+  data[4] = FLAG;
+
+  int res = write(fd, data, ??);
+  printf("%d bytes written\n", res);
+
+  return 0;
+}*/
+
+int set_alarm() {
+  alarm_set = TRUE;
+}
 
 int main(int argc, char **argv)
 {
@@ -113,8 +109,6 @@ int main(int argc, char **argv)
   struct termios oldtio, newtio;
   unsigned char buf[255];
   int i, sum = 0, speed = 0;
-
-  (void)signal(SIGALRM, );
 
   if ((argc < 2) ||
       ((strcmp("/dev/ttyS0", argv[1]) != 0) &&
@@ -133,7 +127,9 @@ int main(int argc, char **argv)
     fd = open(argv[1], O_RDWR | O_NOCTTY );
     if (fd <0) {perror(argv[1]); exit(-1); }
     */
-  int fd = llopen(argv[1]);
+
+
+  int fd = open(argv[1], O_RDWR | O_NOCTTY | O_NONBLOCK);
 
   if (tcgetattr(fd, &oldtio) == -1)
   { /* save current port settings */
@@ -148,9 +144,8 @@ int main(int argc, char **argv)
 
   /* set input mode (non-canonical, no echo,...) */
   newtio.c_lflag = 0;
-
   newtio.c_cc[VTIME] = 0; /* inter-character timer unused */
-  newtio.c_cc[VMIN] = 1;  /* blocking read until 5 chars received */
+  newtio.c_cc[VMIN] = 0;  /* blocking read until 5 chars received */
 
   /* 
     VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
@@ -168,95 +163,56 @@ int main(int argc, char **argv)
 
   printf("New termios structure set\n");
 
-  /*
-    for (i = 0; i < 255; i++) {
-      buf[i] = 'a';
-    }
-    */
-
-  /*testing*/
-  //buf[25] = '\n';
-
-  /*
-    buf[0] = 'O';
-    buf[1] = 'l';
-    buf[2] = 'a';
-    buf[3] = '\0';*/
-
-  /* MESSAGE
-    if(fgets(buf, 255, stdin) == NULL){
-        printf("Gets Error!\n");
-        return 1;
-    }
-    
-    
-    res = write(fd,buf, strlen(buf) + 1);   
-    printf("%d bytes written\n", res);
-    */
-
   /* 
     O ciclo FOR e as instru��es seguintes devem ser alterados de modo a respeitar 
     o indicado no gui�o 
   */
 
-  //void * set = malloc(5);
-  unsigned char set[5];
-  set[0] = FLAG;
-  set[1] = A_SENDER;
-  set[2] = C_SET;
-  unsigned char bcc_set = C_SET ^ A_SENDER;
-  set[3] = bcc_set;
-  set[4] = FLAG;
-  printf("BCC SET: %02X\n", bcc_set);
+  (void) signal(SIGALRM, set_alarm);
+  
+  write_sender_set(fd);
+  alarm(3);
 
-  unsigned char ua[5];
-  ua[0] = FLAG;
-  ua[1] = A_RECEIVER;
-  ua[2] = C_UA;
-  unsigned char bcc_ua = C_UA ^ A_RECEIVER;
-  ua[3] = bcc_ua;
-  ua[4] = FLAG;
-  printf("BCC UA: %02X\n", bcc_ua);
-
-  //unsigned int * sett = (unsigned int *) malloc(5);
-  //*sett = FLAG | (bcc << 8) | (C_SET << 16) | (A_SENDER << 24) | (FLAG << 32);
-  //*sett = FLAG | (bcc << 8) | (C_SET << 16) | (A_SENDER << 24);
-  //printf("SETT: %0X\n", *sett);
-  //free(sett);
-
-  printf("SET: ");
-  for (int i = 0; i < 5; i++)
-  {
-    printf("%02X", set[i]);
-  }
-  printf("\n");
-
-  res = write(fd, set, 5);
-  printf("%d bytes written\n", res);
-
-  int count = 0;
+  int count;
   unsigned char packet[5];
-  STOP = FALSE;
-  while (STOP == FALSE)
-  {
-    res = read(fd, buf, 1);
-    buf[res] = 0;
-    packet[count] = buf[0];
-    printf("Received %d byte: %02X\n", res, buf[0]);
-    count++;
-    if (count == 5)
-      STOP = TRUE;
+  
+  int tries = 3;
+  alarm_set = FALSE;
+
+  while (tries > 0) {
+    count = 0;
+    STOP = FALSE;
+
+    while (STOP == FALSE && tries > 0)
+    {
+      res = read(fd, buf, 1);
+      //printf("Received %d byte: %02X\n", res, buf[0]);
+      if (res){
+        packet[count] = buf[0];
+        count++;
+      }
+      if (count == 5){
+        STOP = TRUE;
+      }
+      if (alarm_set) {
+        alarm_set = FALSE;
+        tries--;
+        if (tries > 0)
+          write_sender_set(fd);
+          alarm(3);
+      }
+    }
+
+    if (STOP && make_bcc(packet, 5) == packet[3]) {
+      break;
+    }
   }
 
-  printf("Received %d bytes.\n", count);
-
-  if (packet[3] == packet[1] ^ packet[2])
-  {
-    printf("Correct BCC for UA\n");
+  if(tries == 0){
+    printf("Didn't receive confirmation\n");
   }
-  else
-  {
-    printf("Wrong BCC!!!\n");
+  else {
+    printf("Success\n");
   }
 
   sleep(1);
