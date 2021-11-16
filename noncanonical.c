@@ -15,6 +15,12 @@
 #define FALSE 0
 #define TRUE 1
 
+#define FLAG 0x7E
+#define A_SENDER 0x03
+#define A_RECEIVER 0x01
+#define C_UA 0x07
+#define C_SET 0x03
+
 volatile int STOP=FALSE;
 
 int main(int argc, char** argv)
@@ -54,7 +60,7 @@ int main(int argc, char** argv)
     newtio.c_lflag = 0;
 
     newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
-    newtio.c_cc[VMIN]     = 1;   /* blocking read until 5 chars received */
+    newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
 
 
 
@@ -83,14 +89,29 @@ int main(int argc, char** argv)
 //    }
 
     int count = 0;
-    char packet[5];
+    unsigned char set[5];
     while (STOP==FALSE) {
         res = read(fd, buf, 1);
+        printf("a");
         buf[res] = 0;
-        packet[count] = res;
+        set[count] = res;
         printf("Received %d byte: %02X\n", res, buf[0]);
+        set[count] = buf[0];
         count++;
         if (count == 5) STOP=TRUE;
+    }
+    
+    unsigned char ua[5];
+    ua[0] = FLAG;
+    ua[1] = A_RECEIVER;
+    ua[2] = C_UA;
+    unsigned char bcc_ua = C_UA ^ A_RECEIVER;
+    ua[3] = bcc_ua;
+    ua[4] = FLAG;
+
+    if (set[3] == set[1] ^ set[2]) {
+        res = write(fd, ua, 5);
+        printf("Sent UA");
     }
 
 
