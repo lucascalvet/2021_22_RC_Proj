@@ -99,8 +99,62 @@ int llwrite(int fd, unsigned char *data, int idle_secs, int retries)
   return 0;
 }*/
 
-int set_alarm() {
+void set_alarm() {
+  printf("Alarm Sent\n");
   alarm_set = TRUE;
+}
+
+void timeout_write(int fd, unsigned char* to_write, int size) {
+  (void) signal(SIGALRM, set_alarm);
+  
+  write(fd, to_write, size);
+  alarm(3);
+
+  int count;
+  unsigned char packet[5];
+  
+  int tries = 3;
+  alarm_set = FALSE;
+
+  while (tries > 0) {
+    count = 0;
+    STOP = FALSE;
+
+    while (STOP == FALSE && tries > 0)
+    {
+      res = read(fd, buf, 1);
+      if (res){
+        printf("Received %d byte: %02X\n", res, buf[0]);
+        packet[count] = buf[0];
+        count++;
+      }
+      if (count >= 5){
+        STOP = TRUE;
+      }
+      if (alarm_set) {
+        alarm_set = FALSE;
+        tries--;
+        if (tries > 0)
+        {
+          write(fd, to_write, size);
+          alarm(3);
+          printf("Alarm triggered, trying again. %d tries left\n", tries);
+        }
+      }
+    }
+
+    if (STOP && make_bcc(&packet[1], 2) == packet[3]) {
+      printf("Received UA\n");
+      break;
+    }
+  }
+
+  if(tries == 0){
+    printf("Didn't receive confirmation\n");
+  }
+  else {
+    printf("Success\n");
+  }
 }
 
 int main(int argc, char **argv)
@@ -112,7 +166,9 @@ int main(int argc, char **argv)
 
   if ((argc < 2) ||
       ((strcmp("/dev/ttyS0", argv[1]) != 0) &&
-       (strcmp("/dev/ttyS1", argv[1]) != 0)))
+       (strcmp("/dev/ttyS1", argv[1]) != 0) &&
+       (strcmp("/dev/ttyS10", argv[1]) != 0) &&
+       (strcmp("/dev/ttyS11", argv[1]) != 0)))
   {
     printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
     exit(1);
@@ -168,52 +224,7 @@ int main(int argc, char **argv)
     o indicado no gui�o 
   */
 
-  (void) signal(SIGALRM, set_alarm);
-  
-  write_sender_set(fd);
-  alarm(3);
-
-  int count;
-  unsigned char packet[5];
-  
-  int tries = 3;
-  alarm_set = FALSE;
-
-  while (tries > 0) {
-    count = 0;
-    STOP = FALSE;
-
-    while (STOP == FALSE && tries > 0)
-    {
-      res = read(fd, buf, 1);
-      //printf("Received %d byte: %02X\n", res, buf[0]);
-      if (res){
-        packet[count] = buf[0];
-        count++;
-      }
-      if (count == 5){
-        STOP = TRUE;
-      }
-      if (alarm_set) {
-        alarm_set = FALSE;
-        tries--;
-        if (tries > 0)
-          write_sender_set(fd);
-          alarm(3);
-      }
-    }
-
-    if (STOP && make_bcc(packet, 5) == packet[3]) {
-      break;
-    }
-  }
-
-  if(tries == 0){
-    printf("Didn't receive confirmation\n");
-  }
-  else {
-    printf("Success\n");
-  }
+  timeout_write(fd, /**coisa pra escrever*/, /**tamamho**/);
 
   sleep(1);
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
