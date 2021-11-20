@@ -13,10 +13,10 @@
 
 #include "common.h"
 
-volatile int STOP = FALSE;
+//volatile int STOP = FALSE;
 //int fd;
 
-int alarm_set = FALSE;
+static int alarm_set = FALSE;
 
 /*
 int llopen(char *port_name)
@@ -99,19 +99,23 @@ int llwrite(int fd, unsigned char *data, int idle_secs, int retries)
   return 0;
 }*/
 
+
+
 void set_alarm() {
   printf("Alarm Sent\n");
   alarm_set = TRUE;
 }
 
-void timeout_write(int fd, unsigned char* to_write, int size) {
+int timeout_write(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte, int check) {
+  int STOP = FALSE;
   (void) signal(SIGALRM, set_alarm);
   
-  write(fd, to_write, size);
+  write(fd, to_write, write_size);
   alarm(3);
 
-  int count;
+  int count, res;
   unsigned char packet[5];
+  unsigned char buf[2];
   
   int tries = 3;
   alarm_set = FALSE;
@@ -128,7 +132,7 @@ void timeout_write(int fd, unsigned char* to_write, int size) {
         packet[count] = buf[0];
         count++;
       }
-      if (count >= 5){
+      if (count >= read_size){
         STOP = TRUE;
       }
       if (alarm_set) {
@@ -136,15 +140,18 @@ void timeout_write(int fd, unsigned char* to_write, int size) {
         tries--;
         if (tries > 0)
         {
-          write(fd, to_write, size);
+          write(fd, to_write, write_size);
           alarm(3);
           printf("Alarm triggered, trying again. %d tries left\n", tries);
         }
       }
     }
 
-    if (STOP && make_bcc(&packet[1], 2) == packet[3]) {
-      printf("Received UA\n");
+    if (STOP && make_bcc(&packet[1], 2) == packet[3] && (!check || packet[2] == check_byte)) {
+      printf("Received Feedback\n");
+      if(check){
+        printf("Feedback Checked Out\n");
+      }
       break;
     }
   }
@@ -155,6 +162,16 @@ void timeout_write(int fd, unsigned char* to_write, int size) {
   else {
     printf("Success\n");
   }
+
+  return 0;
+}
+
+int timeout_write_checkless(int fd, unsigned char* to_write, int read_size, int write_size){
+  return timeout_write(fd, to_write, read_size, write_size, 0, FALSE);
+}
+
+int timeout_write_check(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte){
+  return timeout_write(fd, to_write, read_size, write_size, check_byte, TRUE);
 }
 
 int main(int argc, char **argv)
@@ -187,11 +204,10 @@ int main(int argc, char **argv)
 
   int fd = open(argv[1], O_RDWR | O_NOCTTY | O_NONBLOCK);
 
-  if (tcgetattr(fd, &oldtio) == -1)
-  { /* save current port settings */
-    perror("tcgetattr");
-    exit(-1);
-  }
+  if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
+      perror("tcgetattr");
+      exit(-1);
+    }
 
   bzero(&newtio, sizeof(newtio));
   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
@@ -205,7 +221,7 @@ int main(int argc, char **argv)
 
   /* 
     VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    leitura do(s) pr�ximo(s) caracter(es)
+    leitura do(s) próximo(s) caracter(es)
   */
 
   tcflush(fd, TCIOFLUSH);
@@ -224,7 +240,22 @@ int main(int argc, char **argv)
     o indicado no gui�o 
   */
 
-  timeout_write(fd, /**coisa pra escrever*/, /**tamamho**/);
+  //unsigned char * set;
+  //make_sender_set(&set);
+
+  //timeout_write(fd, /**coisa pra escrever*/, /**tamamho**/);
+  //timeout_write(fd, set, 5);
+
+  unsigned char set[5];
+  set[0] = FLAG;
+  set[1] = A_SENDER;
+  set[2] = C_SET;
+  set[3] = set[1] ^ set[2];
+  set[4] = FLAG;
+
+  //timeout_write_checkless(fd, set, 5, 5);
+  timeout_write_check(fd, set, 5, 5, C_UA);
+
 
   sleep(1);
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1)

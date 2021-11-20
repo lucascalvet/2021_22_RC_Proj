@@ -14,9 +14,102 @@
 
 volatile int STOP=FALSE;
 
+
+int nc_read(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte, int check){
+  int count = 0;
+  int received = FALSE;
+  int res;
+  //unsigned char packet[5];
+  unsigned char buf[2];
+  unsigned char * packet = (unsigned char *) malloc(read_size * sizeof(unsigned char));
+  while(!received){
+    while (STOP==FALSE && !received) {
+        res = read(fd, buf, 1);
+        if(res){
+          packet[count] = buf[0];
+          printf("Received %d byte: %02X\n", res, buf[0]);
+          count++;
+        }
+        if (count == read_size) STOP = TRUE;
+    }
+    
+    if (make_bcc(&packet[1], 2) == packet[3] && (!check || packet[2] == check_byte)) {
+        if(check){
+        printf("Feedback Checked Out\n");
+        }
+        received = TRUE;
+        write(fd, to_write, write_size);
+        printf("Sent Feedback\n");
+    }
+    else{
+      STOP = FALSE;
+      count = 0;
+    }
+  }
+
+  return 0;
+}
+
+
+int nc_read_flag(int fd, unsigned char* to_write, int write_size, unsigned char check_byte, int check){
+  int count = 0, flag_count = 0;
+  int received = FALSE;
+  int res;
+  //unsigned char packet[5];
+  unsigned char buf[2];
+  unsigned char * packet = (unsigned char *) malloc(read_size * sizeof(unsigned char));
+  while(!received){
+    while (STOP==FALSE && !received) {
+        res = read(fd, buf, 1);
+        if(res){
+          packet[count] = buf[0];
+          printf("Received %d byte: %02X\n", res, buf[0]);
+          count++;
+          if(packet[count] == FLAG){
+            flag_count++;
+          }
+        }
+        if (flag_count == 2) STOP = TRUE;
+    }
+    
+    if (make_bcc(&packet[1], 2) == packet[3] && (!check || packet[2] == check_byte)) {
+        if(check){
+        printf("Feedback Checked Out\n");
+        }
+        received = TRUE;
+        write(fd, to_write, write_size);
+        printf("Sent Feedback\n");
+    }
+    else{
+      STOP = FALSE;
+      count = 0;
+      flag_count = 0;
+    }
+  }
+
+  return 0;
+}
+
+/* 
+if(!check_info || make_bcc(&packet[4], write_size - 6) == packet[write_size - 2]) //CHECK INFO BCC2
+if(check_info){
+  printf("Info Checked Out\n");
+  }
+*/
+
+
+int nc_read_checkless(int fd, unsigned char* to_write, int read_size, int write_size){
+  return nc_read(fd, to_write, read_size, write_size, 0, FALSE);
+}
+
+int nc_read_check(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte){
+  return nc_read(fd, to_write, read_size, write_size, check_byte, TRUE);
+}
+
+
 int main(int argc, char** argv)
 {
-    int fd,c, res;
+    int fd, c, res;
     struct termios oldtio,newtio;
     char buf[255];
 
@@ -52,7 +145,6 @@ int main(int argc, char** argv)
 
     /* set input mode (non-canonical, no echo,...) */
     newtio.c_lflag = 0;
-
     newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
     newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
 
@@ -83,6 +175,7 @@ int main(int argc, char** argv)
     }
     */
 
+    /*
     int count = 0;
     int received = FALSE;
     unsigned char packet[5];
@@ -99,13 +192,28 @@ int main(int argc, char** argv)
       
       if (make_bcc(packet, 5) == packet[3]) {
           received = TRUE;
-          write_receiver_ua(fd);
+          unsigned char * ua;
+          make_receiver_ua(&ua);
+          write(fd, ua, 5);
           printf("Sent UA\n");
       }
       else{
         STOP = FALSE;
       }
     }
+    */
+
+    unsigned char ua[5];
+    ua[0] = FLAG;
+    ua[1] = A_RECEIVER;
+    ua[2] = C_UA;
+    ua[3] = ua[1] ^ ua[2];
+    ua[4] = FLAG;
+    //unsigned char * ua;
+    //make_receiver_ua(&ua);
+
+    //nc_read_checkless(fd, ua, 5, 5);
+    nc_read_check(fd, ua, 5, 5, C_SET);
 
     
     tcsetattr(fd,TCSANOW,&oldtio);

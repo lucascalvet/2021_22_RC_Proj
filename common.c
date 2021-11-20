@@ -1,5 +1,14 @@
-#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <termios.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <error.h>
 
 #include "common.h"
 
@@ -141,6 +150,44 @@ int write_receiver_disc(int fd)
 }
 */
 
+int make_info(unsigned char * data, int size, int seq_n, unsigned char ** info_frame){
+  if (size > MAX_DATA_SIZE)
+  {
+    error(0, 0, "Requested data write size (%d) exceeds maximum allowed size (%d)!", size, MAX_DATA_SIZE);
+    return 0;
+  }
+  if (seq_n != 0 && seq_n != 1)
+  {
+    error(0, 0, "Invalid seq_n!");
+    return 0;
+  }
+
+  unsigned char frame_start[4];
+  frame_start[0] = FLAG;
+  frame_start[1] = A_SENDER;
+  frame_start[2] = C_INFO | seq_n << 6;
+  frame_start[3] = frame_start[1] ^ frame_start[2];
+
+  unsigned char frame_end[2];
+  frame_end[0] = make_bcc(data, size);
+  frame_end[1] = FLAG;
+
+  unsigned char * info_result = (unsigned char *) malloc((size + 6) * sizeof(unsigned char));
+  for(int i = 0; i < 4; i++){
+    info_result[i] = frame_start[i];
+  }
+
+  for(int i = 0; i < size; i++){
+    info_result[i+4] = data[i];
+  }
+
+  info_result[size + 4] = frame_end[0];
+  info_result[size + 5] = frame_end[1];
+
+  *info_frame = info_result;
+  return (size + 6);
+}
+
 int write_information(int fd, unsigned char * data, int size, int seq_n)
 {
   if (size > MAX_DATA_SIZE)
@@ -150,7 +197,7 @@ int write_information(int fd, unsigned char * data, int size, int seq_n)
   }
   if (seq_n != 0 && seq_n != 1)
   {
-    error(0, 0, "Invalid seq_n!", size, MAX_DATA_SIZE);
+    error(0, 0, "Invalid seq_n!");
     return 0;
   }
 
@@ -158,7 +205,7 @@ int write_information(int fd, unsigned char * data, int size, int seq_n)
   frame_start[0] = FLAG;
   frame_start[1] = A_SENDER;
   frame_start[2] = C_INFO | seq_n << 6;
-  frame_start[3] = frame[1] ^ frame[2];
+  frame_start[3] = frame_start[1] ^ frame_start[2];
 
   unsigned char frame_end[2];
   frame_end[0] = make_bcc(data, size);
@@ -183,6 +230,16 @@ int byte_stuffing_count(unsigned char * info_frame, int size){
   return counter;
 }
 
+int byte_destuffing_count(unsigned char * info_frame, int size){
+  int counter = 0;
+  for(int i = 1; i < size - 1; i++){
+    if(info_frame[i] == ESCAPE){
+      counter++;
+    }
+  }
+  return counter;
+}
+
 int byte_stuffing(unsigned char * info_frame, int size, unsigned char ** result_frame){
   unsigned char * stuffed_frame = (unsigned char *) malloc((size + byte_stuffing_count(info_frame, size)) * sizeof(unsigned char));
   int counter = 1;
@@ -198,99 +255,145 @@ int byte_stuffing(unsigned char * info_frame, int size, unsigned char ** result_
     counter++;
   }
   stuffed_frame[counter] = info_frame[size - 1];
+
   *result_frame = stuffed_frame;
   return (++counter);
 }
 
-/*
+int byte_destuffing(unsigned char * info_frame, int size, unsigned char ** result_frame){
+  unsigned char * stuffed_frame = (unsigned char *) malloc((size - byte_destuffing_count(info_frame, size)) * sizeof(unsigned char));
+  int counter = 0;
+  for(int i = 0; i < size; i++){
+    if(info_frame[i] == ESCAPE){
+      switch (info_frame[++i]){
+        case FLAG_REP:
+          stuffed_frame[counter] = FLAG;
+          break;
+        case ESCAPE_REP:
+          stuffed_frame[counter] = ESCAPE;
+          break;
+        default:
+          break;
+      }
+    }
+    else{
+      stuffed_frame[counter] = info_frame[i];
+    }
+    counter++;
+  }
+  
+  *result_frame = stuffed_frame;
+  return (++counter);
+}
+
+
 int make_sender_set(unsigned char ** sender_set)
 {
-  (*sender_set)[0] = FLAG;
-  (*sender_set)[1] = A_SENDER;
-  (*sender_set)[2] = C_SET;
-  (*sender_set)[3] = (*sender_set)[1] ^ (*sender_set)[2];
-  (*sender_set)[4] = FLAG;
+  unsigned char res[5];
+  res[0] = FLAG;
+  res[1] = A_SENDER;
+  res[2] = C_SET;
+  res[3] = res[1] ^ res[2];
+  res[4] = FLAG;
+
+  *sender_set = res;
 
   return 5;
 }
 
 int make_receiver_ua(unsigned char ** receiver_ua)
 {
-  (*receiver_ua)[0] = FLAG;
-  (*receiver_ua)[1] = A_RECEIVER;
-  (*receiver_ua)[2] = C_UA;
-  (*receiver_ua)[3] = (*receiver_ua)[1] ^ (*receiver_ua)[2];
-  (*receiver_ua)[4] = FLAG;
+  unsigned char res[5];
+  res[0] = FLAG;
+  res[1] = A_RECEIVER;
+  res[2] = C_UA;
+  res[3] = res[1] ^ res[2];
+  res[4] = FLAG;
+
+  *receiver_ua = res;
 
   return 5;
 }
 
 int make_sender_ua(unsigned char ** sender_ua)
 {
-  (*sender_ua)[0] = FLAG;
-  (*sender_ua)[1] = A_SENDER;
-  (*sender_ua)[2] = C_UA;
-  (*sender_ua)[3] = (*sender_ua)[1] ^ (*sender_ua)[2];
-  (*sender_ua)[4] = FLAG;
+  unsigned char res[5];
+  res[0] = FLAG;
+  res[1] = A_SENDER;
+  res[2] = C_UA;
+  res[3] = res[1] ^ res[2];
+  res[4] = FLAG;
+
+  *sender_ua = res;
 
   return 5;
 }
 
 int make_receiver_rr(unsigned char ** receiver_rr, int n_seq)
 {
-  (*receiver_rr)[0] = FLAG;
-  (*receiver_rr)[1] = A_RECEIVER;
+  unsigned char res[5];
+  res[0] = FLAG;
+  res[1] = A_RECEIVER;
   if(n_seq) {
-    (*receiver_rr)[2] = C_RR_N;
+    res[2] = C_RR_N;
   }
   else{
-    (*receiver_rr)[2] = C_RR;
+    res[2] = C_RR;
   }
-  (*receiver_rr)[3] = (*receiver_rr)[1] ^ (*receiver_rr)[2];
-  (*receiver_rr)[4] = FLAG;
+  res[3] = res[1] ^ res[2];
+  res[4] = FLAG;
+
+  *receiver_rr = res;
 
   return 5;
 }
 
 int make_receiver_rej(unsigned char ** receiver_rej, int n_seq)
 {
-  (*receiver_rej)[0] = FLAG;
-  (*receiver_rej)[1] = A_RECEIVER;
+  unsigned char res[5];
+  res[0] = FLAG;
+  res[1] = A_RECEIVER;
   if(n_seq) {
-    (*receiver_rej)[2] = C_RR_N;
+    res[2] = C_REJ_N;
   }
   else{
-    (*receiver_rej)[2] = C_RR;
+    res[2] = C_REJ;
   }
-  (*receiver_rej)[3] = (*receiver_rej)[1] ^ (*receiver_rej)[2];
-  (*receiver_rej)[4] = FLAG;
+  res[3] = res[1] ^ res[2];
+  res[4] = FLAG;
+
+  *receiver_rej = res;
 
   return 5;
 }
 
 int make_sender_disc(unsigned char ** sender_disc)
 {
-  (*sender_disc)[0] = FLAG;
-  (*sender_disc)[1] = A_SENDER;
-  (*sender_disc)[2] = C_DISC;
-  (*sender_disc)[3] = (*sender_disc)[1] ^ (*sender_disc)[2];
-  (*sender_disc)[4] = FLAG;
+  unsigned char res[5];
+  res[0] = FLAG;
+  res[1] = A_SENDER;
+  res[2] = C_DISC;
+  res[3] = res[1] ^ res[2];
+  res[4] = FLAG;
+  
+  *sender_disc = res;
 
   return 5;
 }
 
 int make_receiver_disc(unsigned char ** receiver_disc)
 {
-  (*receiver_disc)[0] = FLAG;
-  (*receiver_disc)[1] = A_RECEIVER;
-  (*receiver_disc)[2] = C_DISC;
-  (*receiver_disc)[3] = (*receiver_disc)[1] ^ (*receiver_disc)[2];
-  (*receiver_disc)[4] = FLAG;
+  unsigned char res[5];
+  res[0] = FLAG;
+  res[1] = A_RECEIVER;
+  res[2] = C_DISC;
+  res[3] = res[1] ^ res[2];
+  res[4] = FLAG;
+  
+  *receiver_disc = res;
 
   return 5;
 }
-
-*/
 
 
 
