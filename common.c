@@ -184,10 +184,11 @@ int make_info(unsigned char * data, int size, int seq_n, unsigned char ** info_f
   info_result[size + 4] = frame_end[0];
   info_result[size + 5] = frame_end[1];
 
-  *info_frame = info_result;
-  return (size + 6);
+  //info_frame = info_result;
+  //return (size + 6);
+  return byte_stuffing(info_result, size + 6, info_frame);
 }
-
+/*
 int write_information(int fd, unsigned char * data, int size, int seq_n)
 {
   if (size > MAX_DATA_SIZE)
@@ -228,7 +229,7 @@ int byte_stuffing_count(unsigned char * info_frame, int size){
     }
   }
   return counter;
-}
+}*/
 
 int byte_destuffing_count(unsigned char * info_frame, int size){
   int counter = 0;
@@ -289,7 +290,8 @@ int byte_destuffing(unsigned char * info_frame, int size, unsigned char ** resul
 
 int make_sender_set(unsigned char ** sender_set)
 {
-  unsigned char res[5];
+  //unsigned char res[5];
+  unsigned char * res = (unsigned char *) malloc(5 * sizeof(unsigned char));
   res[0] = FLAG;
   res[1] = A_SENDER;
   res[2] = C_SET;
@@ -303,7 +305,8 @@ int make_sender_set(unsigned char ** sender_set)
 
 int make_receiver_ua(unsigned char ** receiver_ua)
 {
-  unsigned char res[5];
+  //unsigned char res[5];
+  unsigned char * res = (unsigned char *) malloc(5 * sizeof(unsigned char));
   res[0] = FLAG;
   res[1] = A_RECEIVER;
   res[2] = C_UA;
@@ -317,7 +320,8 @@ int make_receiver_ua(unsigned char ** receiver_ua)
 
 int make_sender_ua(unsigned char ** sender_ua)
 {
-  unsigned char res[5];
+  //unsigned char res[5];
+  unsigned char * res = (unsigned char *) malloc(5 * sizeof(unsigned char));
   res[0] = FLAG;
   res[1] = A_SENDER;
   res[2] = C_UA;
@@ -331,7 +335,8 @@ int make_sender_ua(unsigned char ** sender_ua)
 
 int make_receiver_rr(unsigned char ** receiver_rr, int n_seq)
 {
-  unsigned char res[5];
+  //unsigned char res[5];
+  unsigned char * res = (unsigned char *) malloc(5 * sizeof(unsigned char));
   res[0] = FLAG;
   res[1] = A_RECEIVER;
   if(n_seq) {
@@ -350,7 +355,8 @@ int make_receiver_rr(unsigned char ** receiver_rr, int n_seq)
 
 int make_receiver_rej(unsigned char ** receiver_rej, int n_seq)
 {
-  unsigned char res[5];
+  //unsigned char res[5];
+  unsigned char * res = (unsigned char *) malloc(5 * sizeof(unsigned char));
   res[0] = FLAG;
   res[1] = A_RECEIVER;
   if(n_seq) {
@@ -369,7 +375,8 @@ int make_receiver_rej(unsigned char ** receiver_rej, int n_seq)
 
 int make_sender_disc(unsigned char ** sender_disc)
 {
-  unsigned char res[5];
+  //unsigned char res[5];
+  unsigned char * res = (unsigned char *) malloc(5 * sizeof(unsigned char));
   res[0] = FLAG;
   res[1] = A_SENDER;
   res[2] = C_DISC;
@@ -383,7 +390,8 @@ int make_sender_disc(unsigned char ** sender_disc)
 
 int make_receiver_disc(unsigned char ** receiver_disc)
 {
-  unsigned char res[5];
+  //unsigned char res[5];
+  unsigned char * res = (unsigned char *) malloc(5 * sizeof(unsigned char));
   res[0] = FLAG;
   res[1] = A_RECEIVER;
   res[2] = C_DISC;

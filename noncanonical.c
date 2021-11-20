@@ -9,13 +9,14 @@
 #include <strings.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "common.h"
 
 volatile int STOP=FALSE;
 
-
-int nc_read(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte, int check){
+/*
+int nc_read(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte){
   int count = 0;
   int received = FALSE;
   int res;
@@ -33,10 +34,8 @@ int nc_read(int fd, unsigned char* to_write, int read_size, int write_size, unsi
         if (count == read_size) STOP = TRUE;
     }
     
-    if (make_bcc(&packet[1], 2) == packet[3] && (!check || packet[2] == check_byte)) {
-        if(check){
+    if (make_bcc(&packet[1], 2) == packet[3] && packet[2] == check_byte) {
         printf("Feedback Checked Out\n");
-        }
         received = TRUE;
         write(fd, to_write, write_size);
         printf("Sent Feedback\n");
@@ -47,48 +46,191 @@ int nc_read(int fd, unsigned char* to_write, int read_size, int write_size, unsi
     }
   }
 
-  return 0;
+  return 1;
 }
+*/
 
 
-int nc_read_flag(int fd, unsigned char* to_write, int write_size, unsigned char check_byte, int check){
-  int count = 0, flag_count = 0;
+int nc_read_flag(int fd){
+  int count = 0, flag_state = 0; // 0-> Beg | 1->First Batch | 2->Mid Frame | 3->End
   int received = FALSE;
-  int res;
+  int res, address_index;
   //unsigned char packet[5];
   unsigned char buf[2];
-  unsigned char * packet = (unsigned char *) malloc(read_size * sizeof(unsigned char));
+  unsigned char * packet = (unsigned char *) malloc(MAX_DATA_SIZE * sizeof(unsigned char));
+  unsigned char * read_res = (unsigned char *) malloc(MAX_DATA_SIZE * sizeof(unsigned char));
   while(!received){
     while (STOP==FALSE && !received) {
         res = read(fd, buf, 1);
         if(res){
-          packet[count] = buf[0];
+          
           printf("Received %d byte: %02X\n", res, buf[0]);
-          count++;
+          
           if(packet[count] == FLAG){
-            flag_count++;
+            switch flag_state{
+              case 0:
+                flag_state = 1;
+                break;
+              case 2:
+                flag_state = 3;
+                break;
+              default:
+                break;
+            }
+          } 
+          else{
+            packet[count] = buf[0];
+            count++;
+            if(flag_state == 1){
+              //address_index = count;
+              flag_state = 2;
+            }
           }
+          //count++;
         }
-        if (flag_count == 2) STOP = TRUE;
+
+        if (flag_state == 3){
+          STOP = TRUE;
+          flag_state = 1;
+        }
     }
     
-    if (make_bcc(&packet[1], 2) == packet[3] && (!check || packet[2] == check_byte)) {
-        if(check){
-        printf("Feedback Checked Out\n");
-        }
-        received = TRUE;
-        write(fd, to_write, write_size);
-        printf("Sent Feedback\n");
+    //if (make_bcc(&packet[address_index], 2) == packet[3])
+    if (make_bcc(&packet[0], 2) == packet[2]) { 
+      printf("Info Header Checked Out\n");
+      received = TRUE;
+      read_res = packet;
+      unsigned char * to_write;
+      int write_size = 5;
+      int n_seq = 0;
+      switch(packet[1]){
+        case C_SET:
+          printf("SET Received. Sending UA\n");
+          make_receiver_ua(&to_write);
+          break;
+
+        case C_DISC:
+          printf("DISC Received. Sending DISC\n");
+          make_receiver_disc(&to_write);
+          break;
+
+        case C_INFO:
+          n_seq = 1;
+        case C_INFO_N:
+          unsigned char * destuffed_info;
+          byte_destuffing(packet, count, &destuffed_info);
+          read_res = destuffed_info;
+          if(make_bcc(&packet[3], count - 4) == packet[count - 1]){
+            printf("Info Body Checks Out. Sending RR\n");
+            make_receiver_rr(&to_write, n_seq);
+          }
+          else{
+            printf("Info Body Wrong. Sending REJ\n");
+            make_receiver_rej(&to_write, n_seq);
+          }
+          break;
+
+        case C_UA:
+          printf("Reading Complete\n");
+          break;
+
+        default:
+          received = false;
+          break;
+      }
+      
+      write(fd, to_write, write_size);
+      printf("Sent Feedback\n");
     }
-    else{
-      STOP = FALSE;
-      count = 0;
-      flag_count = 0;
+    
+    STOP = FALSE;
+    count = 0;
+    flag_state = 1;
+  }
+
+  free(packet);
+  return read_res;
+}
+
+/*
+int nc_read_info(int fd){
+  int count = 0, flag_state = 0; // 0-> Beg | 1->First Batch | 2->Mid Frame | 3->End
+  int received = FALSE, res;
+  //unsigned char packet[5];
+  unsigned char buf[2];
+  unsigned char * packet = (unsigned char *) malloc(MAX_DATA_SIZE * sizeof(unsigned char));
+  while(!received){
+    while (STOP==FALSE && !received) {
+        res = read(fd, buf, 1);
+        if(res){
+          
+          printf("Received %d byte: %02X\n", res, buf[0]);
+          
+          if(packet[count] == FLAG){
+            switch flag_state{
+              case 0:
+                flag_state = 1;
+                break;
+              case 2:
+                flag_state = 3;
+                break;
+              default:
+                break;
+            }
+          } 
+          else{
+            packet[count] = buf[0];
+            count++;
+            if(flag_state == 1){
+              //address_index = count;
+              flag_state = 2;
+            }
+          }
+          //count++;
+        }
+
+        if (flag_state == 3){
+          STOP = TRUE;
+          flag_state = 1;
+        } 
+    }
+    
+    //if (make_bcc(&packet[address_index], 2) == packet[3])
+    if (make_bcc(&packet[0], 2) == packet[2]) { 
+      printf("Info Header Checked Out\n");
+      received = TRUE;
+      unsigned char * to_write;
+      int write_size = 5;
+      int n_seq = 0;
+      switch(packet[1]){
+        case C_INFO:
+          n_seq = 1;
+        case C_INFO_N:
+          unsigned char * destuffed_info;
+          byte_destuffing(packet, count, &destuffed_info);
+          if(make_bcc(&packet[3], count - 4) == packet[count - 1]){
+            printf("Info Body Checks Out. Sending RR\n");
+            make_receiver_rr(&to_write, n_seq);
+          }
+          else{
+            printf("Info Body Wrong. Sending REJ\n");
+            make_receiver_rej(&to_write, n_seq);
+          }
+          break;
+
+        default:
+          break;
+      }
+      
+      write(fd, to_write, write_size);
+      printf("Sent Feedback\n");
     }
   }
 
-  return 0;
+  return count;
 }
+*/
+
 
 /* 
 if(!check_info || make_bcc(&packet[4], write_size - 6) == packet[write_size - 2]) //CHECK INFO BCC2
@@ -97,7 +239,7 @@ if(check_info){
   }
 */
 
-
+/*
 int nc_read_checkless(int fd, unsigned char* to_write, int read_size, int write_size){
   return nc_read(fd, to_write, read_size, write_size, 0, FALSE);
 }
@@ -105,6 +247,7 @@ int nc_read_checkless(int fd, unsigned char* to_write, int read_size, int write_
 int nc_read_check(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte){
   return nc_read(fd, to_write, read_size, write_size, check_byte, TRUE);
 }
+*/
 
 
 int main(int argc, char** argv)
@@ -166,43 +309,6 @@ int main(int argc, char** argv)
 
     printf("New termios structure set\n");
 
-    /*
-    while (STOP==FALSE) {       // loop for input
-    res = read(fd,buf,1);   // returns after 5 chars have been input 
-    buf[res]=0;               // so we can printf... 
-    printf(":%s:%d\n", buf, res);
-    if (buf[res-1]==0) STOP=TRUE;
-    }
-    */
-
-    /*
-    int count = 0;
-    int received = FALSE;
-    unsigned char packet[5];
-    while(!received){
-      while (STOP==FALSE && !received) {
-          res = read(fd, buf, 1);
-          if(res){
-            packet[count] = buf[0];
-            printf("Received %d byte: %02X\n", res, buf[0]);
-            count++;
-          }
-          if (count == 5) STOP = TRUE;
-      }
-      
-      if (make_bcc(packet, 5) == packet[3]) {
-          received = TRUE;
-          unsigned char * ua;
-          make_receiver_ua(&ua);
-          write(fd, ua, 5);
-          printf("Sent UA\n");
-      }
-      else{
-        STOP = FALSE;
-      }
-    }
-    */
-
     unsigned char ua[5];
     ua[0] = FLAG;
     ua[1] = A_RECEIVER;
@@ -212,8 +318,7 @@ int main(int argc, char** argv)
     //unsigned char * ua;
     //make_receiver_ua(&ua);
 
-    //nc_read_checkless(fd, ua, 5, 5);
-    nc_read_check(fd, ua, 5, 5, C_SET);
+    nc_read(fd, ua, 5, 5, C_SET);
 
     
     tcsetattr(fd,TCSANOW,&oldtio);

@@ -106,7 +106,8 @@ void set_alarm() {
   alarm_set = TRUE;
 }
 
-int timeout_write(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte, int check) {
+/*
+unsigned char* timeout_write(int fd, unsigned char* to_write, int read_size, int write_size) {
   int STOP = FALSE;
   (void) signal(SIGALRM, set_alarm);
   
@@ -114,7 +115,7 @@ int timeout_write(int fd, unsigned char* to_write, int read_size, int write_size
   alarm(3);
 
   int count, res;
-  unsigned char packet[5];
+  unsigned char packet = (unsigned char *) malloc(read_size * sizeof(unsigned char));
   unsigned char buf[2];
   
   int tries = 3;
@@ -147,25 +148,111 @@ int timeout_write(int fd, unsigned char* to_write, int read_size, int write_size
       }
     }
 
-    if (STOP && make_bcc(&packet[1], 2) == packet[3] && (!check || packet[2] == check_byte)) {
-      printf("Received Feedback\n");
-      if(check){
-        printf("Feedback Checked Out\n");
-      }
+    if (STOP && make_bcc(&packet[1], 2) == packet[3]) {
+      printf("Received correct Feedback\n");
       break;
     }
   }
 
   if(tries == 0){
     printf("Didn't receive confirmation\n");
+    return NULL;
   }
   else {
     printf("Success\n");
+    return packet;
+  }
+}
+*/
+
+unsigned char* timeout_write_flag(int fd, unsigned char* to_write, int write_size) {
+  int STOP = FALSE;
+  (void) signal(SIGALRM, set_alarm);
+  
+  write(fd, to_write, write_size);
+  alarm(TIMEOUT);
+
+  int res, count = 0, flag_state = 0;
+  unsigned char packet = (unsigned char *) malloc(MAX_DATA_SIZE * sizeof(unsigned char));
+  unsigned char buf[2];
+  
+  int tries = 3;
+  alarm_set = FALSE;
+
+  while (tries > 0) {
+    count = 0;
+    STOP = FALSE;
+    //flag_state = 0;
+
+    while (STOP == FALSE && tries > 0)
+    {
+      res = read(fd, buf, 1);
+      if(res){
+        printf("Received %d byte: %02X\n", res, buf[0]);
+        
+        if(packet[count] == FLAG){
+          switch flag_state{
+            case 0:
+              flag_state = 1;
+              break;
+            case 2:
+              flag_state = 3;
+              break;
+            default:
+              break;
+          }
+        } 
+        else{
+          packet[count] = buf[0];
+          count++;
+          if(flag_state == 1){
+            //address_index = count;
+            flag_state = 2;
+          }
+        }
+        //count++;
+      }
+      /*
+      if (res){
+        printf("Received %d byte: %02X\n", res, buf[0]);
+        packet[count] = buf[0];
+        count++;
+      }
+      */
+      if (alarm_set) {
+        alarm_set = FALSE;
+        tries--;
+        if (tries > 0)
+        {
+          write(fd, to_write, write_size);
+          alarm(TIMEOUT);
+          printf("Alarm triggered, trying again. %d tries left\n", tries);
+        }
+      }
+
+      if (flag_state == 3){
+        STOP = TRUE;
+        flag_state = 1;
+      }
+    }
+
+    if (STOP && make_bcc(&packet[1], 2) == packet[3]) {
+      printf("Received correct Feedback\n");
+      break;
+    }
   }
 
-  return 0;
+  if(tries == 0){
+    printf("Didn't receive confirmation\n");
+    return NULL;
+  }
+  else {
+    printf("Success\n");
+    return packet;
+  }
 }
 
+/*
 int timeout_write_checkless(int fd, unsigned char* to_write, int read_size, int write_size){
   return timeout_write(fd, to_write, read_size, write_size, 0, FALSE);
 }
@@ -173,6 +260,7 @@ int timeout_write_checkless(int fd, unsigned char* to_write, int read_size, int 
 int timeout_write_check(int fd, unsigned char* to_write, int read_size, int write_size, unsigned char check_byte){
   return timeout_write(fd, to_write, read_size, write_size, check_byte, TRUE);
 }
+*/
 
 int main(int argc, char **argv)
 {
@@ -202,7 +290,7 @@ int main(int argc, char **argv)
     */
 
 
-  int fd = open(argv[1], O_RDWR | O_NOCTTY | O_NONBLOCK);
+  int fd = open(argv[1], O_RDWR | O_NOCTTY);
 
   if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
       perror("tcgetattr");
@@ -253,9 +341,61 @@ int main(int argc, char **argv)
   set[3] = set[1] ^ set[2];
   set[4] = FLAG;
 
-  //timeout_write_checkless(fd, set, 5, 5);
-  timeout_write_check(fd, set, 5, 5, C_UA);
+  unsigned char * response;
+  response = timeout_write(fd, set, 5, 5);
+  if (response == NULL) {
+    free(response);
+    error(1, 0, "No response after 3 tries.\n");
+  }
+  if (response[2] != C_UA) {
+    free(response);
+    error(1, 0, "Wrong response.\n");
+  }
+  free(response);
 
+  unsigned char * info_frame;
+  unsigned char * data = "PINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMPINGUIMLUKEDAURTPINGUPINGUPINGUPINGUPINGU";
+  data[3] = FLAG;
+  
+  int size = make_info(data, 200, 0, &info_frame);
+  do {
+    response = timeout_write(fd, info_frame, 5, size);
+    if (response == NULL) {
+      free(response);
+      error(1, 0, "No response after 3 tries.\n");
+    }
+    if (response[1] == C_REJ_N) {
+      free(response);
+      printf("Data frame rejected, trying again...\n");
+    }
+  } while (response[1] == C_REJ_N);
+
+  if (response[1] != C_RR_N) {
+    free(response);
+    error(1, 0, "Wrong response.\n");
+  }
+
+  free(response);
+
+  unsigned char disc[5];
+  disc[0] = FLAG;
+  disc[1] = A_SENDER;
+  disc[2] = C_DISC;
+  disc[3] = disc[1] ^ disc[2];
+  disc[4] = FLAG;
+
+  response = timeout_write(fd, disc, 5, 5);
+  if (response == NULL) {
+    free(response);
+    error(1, 0, "No response after 3 tries.\n");
+  }
+  if (response[2] != C_DISC) {
+    free(response);
+    error(1, 0, "Wrong response.\n");
+  }
+  free(response);
+
+  printf("Data successfully transmitted. Leaving...\n");
 
   sleep(1);
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
