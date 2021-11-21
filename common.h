@@ -1,3 +1,6 @@
+#ifndef COMMON_H
+#define COMMON_H
+
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
@@ -28,10 +31,17 @@
 #define ESCAPE_REP 0x5D
 #define REP 0x20
 
+#define DP  0x01
+#define CP_START 0x02
+#define CP_END 0x03
+#define CP_T_FSIZE 0x00
+#define CP_T_FNAME 0x01
+
+
 struct applicationLayer {
     int fileDescriptor; /*Descritor correspondente à porta série*/
     int status; /*TRANSMITTER | RECEIVER*/
-}
+};
 
 struct linkLayer {
     char port[20]; /*Dispositivo /dev/ttySx, x = 0, 1*/
@@ -40,21 +50,10 @@ struct linkLayer {
     unsigned int timeout; /*Valor do temporizador: 1 s*/
     unsigned int numTransmissions; /*Número de tentativas em caso de falha*/
     char frame[MAX_DATA_SIZE]; /*Trama*/
-}
+};
 
 
 unsigned char make_bcc(unsigned char * byte_list, int size);
-//bool check_bcc(unsigned char * byte_list, unsigned char bcc);
-
-/*
-int write_sender_set(int fd);
-int write_receiver_ua(int fd);
-int write_sender_ua(int fd);
-int write_receiver_rr(int fd, int n_seq);
-int write_receiver_rej(int fd, int n_seq);
-int write_sender_disc(int fd);
-int write_receiver_disc(int fd);
-*/
 
 int write_information(int fd, unsigned char * data, int size, int seq_n);
 
@@ -72,12 +71,4 @@ int make_receiver_rej(unsigned char ** receiver_rej, int n_seq);
 int make_sender_disc(unsigned char ** sender_disc);
 int make_receiver_disc(unsigned char ** receiver_disc);
 
-
-
-
-
-
-
-
-
-
+#endif
