@@ -1,7 +1,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <termios.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -9,11 +8,12 @@
 #include <unistd.h>
 //#include <signal.h>
 
-#include "common.h"
 #include "macros.h"
+#include "app.h"
 
-int make_data_package(int seq_n, unsigned char * data, int size, unsigned char ** data_package){
-    unsigned char * result_package = (unsigned char *) malloc((size + 4) * sizeof(unsigned char));
+int make_data_package(int seq_n, unsigned char *data, int size, unsigned char **data_package)
+{
+    unsigned char *result_package = (unsigned char *)malloc((size + 4) * sizeof(unsigned char));
     result_package[0] = DP;
     result_package[1] = seq_n % 256;
     result_package[2] = size / 256;
@@ -21,7 +21,8 @@ int make_data_package(int seq_n, unsigned char * data, int size, unsigned char *
 
     //memcpy(&result_package[4], data, size);
     //memcpy(data_package[4], data, size);
-    for(int i = 0; i < size; i++){
+    for (int i = 0; i < size; i++)
+    {
         result_package[i + 4] = data[i];
     }
 
@@ -29,19 +30,22 @@ int make_data_package(int seq_n, unsigned char * data, int size, unsigned char *
     return size + 4;
 }
 
-int read_data_package(unsigned char * data_package, int * seq_n, unsigned char ** data){
-    if(data_package[0] != DP){
-        return 0;
+int read_data_package(unsigned char *data_package, int *seq_n, unsigned char **data)
+{
+    if (data_package[0] != DP)
+    {
+        printf("Not a data package inside read dp!\n");
+        return -1;
     }
     *seq_n = data_package[1];
     int data_size = data_package[2] * 256 + data_package[3];
 
-    unsigned char * result_data = (unsigned char *) malloc(data_size * sizeof(unsigned char));
-
+    unsigned char *result_data = (unsigned char *)malloc(data_size * sizeof(unsigned char));
 
     //memcpy(&result_data, data_package + 4, data_size);
     //memcpy(data, data_package + 4, data_size);
-    for(int i = 0; i < data_size; i++){
+    for (int i = 0; i < data_size; i++)
+    {
         result_data[i] = data_package[i + 4];
     }
 
@@ -49,69 +53,85 @@ int read_data_package(unsigned char * data_package, int * seq_n, unsigned char *
     return data_size;
 }
 
-int make_control_package(int start, int file_size, unsigned char * file_name, unsigned char ** control_package){
-    unsigned char * result_package = (unsigned char *) malloc(MAX_DATA_SIZE * sizeof(unsigned char)); //MAX_DATA_SIZE?????
-    if(start){
+int make_control_package(int start, int file_size, char *file_name, unsigned char **control_package)
+{
+    unsigned char *result_package = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
+    if (start)
+    {
         result_package[0] = CP_START;
     }
-    else{
+    else
+    {
         result_package[0] = CP_END;
     }
 
     result_package[1] = CP_T_FSIZE;
-    char * size_string = (char*)malloc(sizeof(int)); 
+
+    /*
+    char *size_string = (char *) malloc(sizeof(int));
     sprintf(size_string, "%d", file_size);
     result_package[2] = strlen(size_string);
+    */
+    result_package[2] = sizeof(int);
     
+
     //memcpy(&result_package[3], size_string, result_package[2]);
     //memcpy(control_package[3], size_string, result_package[2]);
-    for(int i = 0; i < strlen(size_string); i++){
+    /*
+    for (int i = 0; i < strlen(size_string); i++)
+    {
         result_package[i + 3] = size_string[i];
     }
+    */
+    memcpy(&result_package[3], &file_size, sizeof(int));
 
-    int index = 3 + strlen(size_string);
+    //int index = 3 + strlen(size_string);
+    int index = 3 + sizeof(int);
 
     result_package[index++] = CP_T_FNAME;
-    result_package[index++] = strlen(file_name);
+    result_package[index++] = strlen(file_name) + 1;
 
-    //memcpy(&result_package[++index], file_name, strlen(file_name));
+    //memcpy(&result_package[index], file_name, strlen(file_name));
     //memcpy(control_package[++index], file_name, strlen(file_name));
-    for(int i = 0; i < strlen(file_name); i++){
-        result_package[index + i] = size_string[i];
+    for (int i = 0; i < strlen(file_name) + 1; i++)
+    {
+        result_package[index + i] = file_name[i];
     }
-
+    //memcpy(&result_package[index], file_name, strlen(file_name));
+    
     *control_package = result_package;
-    return index + strlen(file_name);
+    return index + strlen(file_name) + 1;
 }
 
-int read_control_package(unsigned char * control_package, int package_size, int * file_size, unsigned char ** file_name){
-    int fname_len = -1;
-    for(int i = 0; i < package_size; i++){
-        if(control_package[i] == CP_T_FSIZE){
-            int fsize_len = control_package[++i];
-            unsigned char * fsize_str = (unsigned char *) malloc(fsize_len * sizeof(unsigned char));
+int read_control_package(unsigned char *control_package, int package_size, int *file_size, char **file_name)
+{
+    if (control_package[0] != CP_START && control_package[0] != CP_END)
+    {
+        printf("Not a control package inside read cp!\n");
+        return -1;
+    }
 
-            //memcpy(fsize_str, &control_package[++i], fsize_len);
-            //i += fsize_len;
-            for(int j = 0; j < fsize_len; j++){
-                fsize_str[j] = control_package[++i];
-            }
-            free(fsize_str);
+    int fname_len = 0;
+    int fsize_len = 0;
+    for (int i = 0; i < package_size; i++)
+    {
+        if (control_package[i] == CP_T_FSIZE)
+        {
+            fsize_len = control_package[++i];
+
+            memcpy(file_size, &control_package[++i], fsize_len);
+            i += fsize_len;
         }
 
-        if(control_package[i] == CP_T_FNAME){
+        if (control_package[i] == CP_T_FNAME)
+        {
             fname_len = control_package[++i];
-            unsigned char * fname_str = (unsigned char *) malloc(fname_len * sizeof(unsigned char));
+            *file_name = (char *)malloc(fname_len * sizeof(char));
 
-            //memcpy(fname_str, &control_package[++i], fname_len);
-            //i += fname_len;
-            for(int j = 0; j < fname_len; j++){
-                fname_str[j] = control_package[++i];
-            }
-            free(fname_str);
+            memcpy(*file_name, &control_package[++i], fname_len);
+            i += fname_len;
         }
     }
 
-    return fname_len;
+    return 5 + fsize_len + fname_len;
 }
-

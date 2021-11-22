@@ -10,67 +10,141 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <libgen.h>
+#include <errno.h>
+#include <error.h>
 
-int main(int argc, char** argv)
+#include "link_layer.h"
+#include "app.h"
+
+int main(int argc, char **argv)
 {
-    int fd, c, res;
-    struct termios oldtio,newtio;
-    char buf[255];
+  int port_fd, file_fd;
+  int file_size, end_file_size;
+  int package_len, seq_n;
+  int end_package_stream = FALSE;
+  unsigned char *package;
+  char *file_name;
+  unsigned char *data;
+  char *end_file_name;
 
-    if ((argc < 2) ||
-      ((strcmp("/dev/ttyS0", argv[1]) != 0) &&
-       (strcmp("/dev/ttyS1", argv[1]) != 0) &&
-       (strcmp("/dev/ttyS10", argv[1]) != 0) &&
-       (strcmp("/dev/ttyS11", argv[1]) != 0)))
-       {
-      printf("Usage:\tnserial SerialPort\n\tex: nserial /dev/ttyS1\n");
+  if (argc == 2 || argc == 3)
+  {
+    if (strncmp(argv[1], "/dev/ttyS", 9) != 0)
+    {
+      printf("Usage:\twnc SerialPort OutputFile\n\twnc /dev/ttySX <path_file>\n\tex: nserial /dev/ttyS1 pinguim.gif\n");
       exit(1);
     }
+  }
+  else
+  {
+    printf("Usage:\twnc SerialPort OutputFile\n\twnc /dev/ttySX <path_file>\n\tex: nserial /dev/ttyS1 pinguim.gif\n");
+    exit(1);
+  }
 
+  port_fd = llopen(argv[1], RECEIVER);
+  if (port_fd == -1)
+  {
+    error(1, 0, "error opening serial port");
+    ;
+  }
 
-  /*
-    Open serial port device for reading and writing and not as controlling tty
-    because we don't want to get killed if linenoise sends CTRL-C.
-  */
-  
-    
-    fd = open(argv[1], O_RDWR | O_NOCTTY );
-    if (fd <0) {perror(argv[1]); exit(-1); }
+  int received_start_cp = FALSE;
 
-    if ( tcgetattr(fd,&oldtio) == -1) { /* save current port settings */
-      perror("tcgetattr");
-      exit(-1);
+  while (!received_start_cp)
+  {
+    package_len = llread(port_fd, &package);
+    if (package[0] == CP_START)
+    {
+      printf("Start Control Package Received\n");
+      read_control_package(package, package_len, &file_size, &file_name);
+      received_start_cp = TRUE;
     }
+    free(package);
+  }
 
-    bzero(&newtio, sizeof(newtio));
-    newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
-    newtio.c_iflag = IGNPAR;
-    newtio.c_oflag = 0;
+  if (argc == 3)
+  {
+    file_fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  }
+  else
+  {
+    file_fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  }
 
-    /* set input mode (non-canonical, no echo,...) */
-    newtio.c_lflag = 0;
-    newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
-    newtio.c_cc[VMIN]     = 0;   /* blocking read until 5 chars received */
+  if (file_fd == -1)
+  {
+    free(file_name);
+    error(1, errno, "unable to open/create the file");
+  }
 
+  printf("HERE1\n");
 
-
-  /* 
-    VTIME e VMIN devem ser alterados de forma a proteger com um temporizador a 
-    leitura do(s) pr�ximo(s) caracter(es)
-  */
-
-
-
-    tcflush(fd, TCIOFLUSH);
-
-    if ( tcsetattr(fd,TCSANOW,&newtio) == -1) {
-      perror("tcsetattr");
-      exit(-1);
+  while (!end_package_stream)
+  {
+    printf("HERE1.5\n");
+    if ((package_len = llread(port_fd, &package)) < 0)
+    {
+      free(package);
+      error(1, errno, "llread failed");
     }
+    printf("HERE2\n");
 
-    printf("New termios structure set\n");
+    switch (package[0])
+    {
+    case DP:
+      printf("HERE DP\n");
+      package_len = read_data_package(package, &seq_n, &data);
+      int written_size = write(file_fd, data, package_len);
+      free(data);
+      if (package_len <= 0 || written_size != package_len)
+      {
+        free(package);
+        error(1, errno, "write to file failed");
+      }
+      break;
+    case CP_END:
+      printf("HERE CPEND\n");
+      package_len = read_control_package(package, package_len, &end_file_size, &end_file_name);
+      printf("Final Control Package Read\n");
+      if (strcmp(end_file_name, file_name) != 0)
+      {
+        printf("End file name: %s :-: Begin file name: %s\n", end_file_name, file_name);
+        free(package);
+        free(end_file_name);
+        error(1, errno, "File information isn't the same");
+      }
+      free(end_file_name);
 
-    tcsetattr(fd,TCSANOW,&oldtio);
-    close(fd);
-    return 0;
+      if (end_file_size != file_size)
+      {
+        printf("End file size: %d :-: Begin file size: %d\n", end_file_size, file_size);
+        free(package);
+        free(end_file_name);
+        error(1, errno, "File information isn't the same");
+      }
+      end_package_stream = TRUE;
+      break;
+    default:
+      printf("Received unexpected package type: %X\n", package[0]);
+      break;
+    }
+    free(package);
+  }
+
+  printf("Package Stream Ended\n");
+  printf("FILENAME: %s\n", file_name);
+  printf("FILESIZE: %d\n", file_size);
+
+  free(file_name);
+
+  if (llclose(port_fd, RECEIVER) != 0)
+  {
+    error(1, 0, "error closing serial port");
+  }
+
+  if (close(file_fd) != 0)
+  {
+    error(1, errno, "File didn't close properly");
+  }
 }
