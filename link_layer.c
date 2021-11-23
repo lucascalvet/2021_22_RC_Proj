@@ -78,7 +78,6 @@ int llopen(char *port, enum Role flag)
     response = timeout_write(fd, set, 5);
     if (response == NULL)
     {
-      free(response);
       printf("No response after 3 tries.\n");
       return -1;
     }
@@ -97,7 +96,6 @@ int llopen(char *port, enum Role flag)
     nc_read(fd, &request);
     if (request == NULL)
     {
-      free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_SET)
@@ -130,7 +128,6 @@ int llclose(int fd, enum Role flag)
     response = timeout_write(fd, disc, 5);
     if (response == NULL)
     {
-      free(response);
       printf("No response to DISC after 3 tries.\n");
       return -1;
     }
@@ -164,34 +161,34 @@ int llclose(int fd, enum Role flag)
     printf("HERE1\n");
     if (request == NULL)
     {
-      //free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_DISC)
     {
-      //free(request);
+      free(request);
       printf("Got wrong instruction, expected DISC.");
       return -1;
     }
-    //free(request);
+    free(request);
     printf("HERE2\n");
     nc_read(fd, &request);
     printf("HERE3\n");
     if (request == NULL)
     {
-      //free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_UA)
     {
-      //free(request);
+      free(request);
       printf("Got wrong instruction, expected UA.");
       return -1;
     }
-    //free(request);
+    free(request);
     printf("HERE F\n");
     printf("Receiver - Connection closed.\n");
   }
+
+  sleep(1);
 
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
   {
@@ -219,7 +216,6 @@ int llwrite(int fd, unsigned char *buffer, int length)
     response = timeout_write(fd, info_frame, size);
     if (response == NULL)
     {
-      free(response);
       error(1, 0, "No response after 3 tries.\n");
     }
     if (response[1] == C_REJ_N || response[1] == C_REJ)
@@ -260,7 +256,6 @@ int llread(int fd, unsigned char **buffer)
   printf("READ2");
   if (request == NULL || size == 0)
   {
-    free(request);
     error(1, 0, "nc_read() returned NULL, this should not happen\n");
   }
   printf("READ3");
