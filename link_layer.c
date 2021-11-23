@@ -78,7 +78,6 @@ int llopen(char *port, enum Role flag)
     response = timeout_write(fd, set, 5);
     if (response == NULL)
     {
-      free(response);
       printf("No response after 3 tries.\n");
       return -1;
     }
@@ -130,7 +129,6 @@ int llclose(int fd, enum Role flag)
     response = timeout_write(fd, disc, 5);
     if (response == NULL)
     {
-      free(response);
       printf("No response to DISC after 3 tries.\n");
       return -1;
     }
@@ -219,7 +217,6 @@ int llwrite(int fd, unsigned char *buffer, int length)
     response = timeout_write(fd, info_frame, size);
     if (response == NULL)
     {
-      free(response);
       error(1, 0, "No response after 3 tries.\n");
     }
     if (response[1] == C_REJ_N || response[1] == C_REJ)
@@ -378,16 +375,18 @@ int nc_read(int fd, unsigned char **read_package)
 {
   int STOP = FALSE;
   int count = 0, flag_state = 0; // 0-> Beg | 1->First Batch of Flags | 2->Mid Frame
-  int received = FALSE;
+  int received = FALSE, ua = FALSE;
   int res;
   unsigned char buf;
   unsigned char *packet = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
   while (!received)
   {
     STOP = FALSE;
+    ua = FALSE;
     count = 0;
     while (STOP == FALSE && !received)
     {
+      ua = FALSE;
       res = read(fd, &buf, 1);
       if (res)
       {
@@ -505,6 +504,7 @@ int nc_read(int fd, unsigned char **read_package)
         }
         break;
       case C_UA:
+        ua = TRUE;
         printf("Reading Complete\n");
         break;
 
@@ -513,7 +513,7 @@ int nc_read(int fd, unsigned char **read_package)
         break;
       }
 
-      if (received)
+      if (received && !ua)
       {
         response[3] = response[1] ^ response[2];
         write(fd, response, write_size);
