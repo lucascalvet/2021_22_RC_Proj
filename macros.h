@@ -26,6 +26,7 @@
 #define MAX_DATA_SIZE 200
 #define MAX_PACKAGE_SIZE 500
 #define TIMEOUT 3
+#define TRIES 3
 
 #define ESCAPE 0x7D
 #define FLAG_REP 0x5E

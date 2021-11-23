@@ -78,7 +78,7 @@ int llopen(char *port, enum Role flag)
     response = timeout_write(fd, set, 5);
     if (response == NULL)
     {
-      printf("No response after 3 tries.\n");
+      printf("No response after %d tries.\n", TRIES);
       return -1;
     }
     if (response[1] != C_UA)
@@ -128,15 +128,15 @@ int llclose(int fd, enum Role flag)
     response = timeout_write(fd, disc, 5);
     if (response == NULL)
     {
-      printf("No response to DISC after 3 tries.\n");
+      printf("No response to DISC after %d tries.\n", TRIES);
       return -1;
     }
-    if (response[1] != C_DISC)
+    /*if (response[1] != C_DISC)
     {
       free(response);
       printf("Wrong response, expected DISC.\n");
       return -1;
-    }
+    }*/
     free(response);
 
     unsigned char ua[5];
@@ -209,21 +209,25 @@ int llwrite(int fd, unsigned char *buffer, int length)
 {
   unsigned char *info_frame;
   unsigned char *response;
+  int rej = FALSE;
 
   int size = make_info(buffer, length, n, &info_frame);
   do
   {
+    rej = FALSE;
     response = timeout_write(fd, info_frame, size);
     if (response == NULL)
     {
-      error(1, 0, "No response after 3 tries.\n");
+      error(1, 0, "No response after %d tries.\n", TRIES);
     }
     if (response[1] == C_REJ_N || response[1] == C_REJ)
     {
       free(response);
+      rej = TRUE;
       printf("Data frame rejected, trying again...\n");
+      continue;
     }
-  } while (response[1] == C_REJ_N || response[1] == C_REJ || (response[1] == C_RR_N && n) || (response[1] == C_RR && !n));
+  } while (rej || response[1] == C_REJ_N || response[1] == C_REJ || (response[1] == C_RR_N && n) || (response[1] == C_RR && !n));
 
   if (response[1] != C_RR_N && response[1] != C_RR)
   {
@@ -242,6 +246,7 @@ int llwrite(int fd, unsigned char *buffer, int length)
     }
   }
 
+  free(info_frame);
   free(response);
 
   return size;
@@ -286,7 +291,7 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
   unsigned char *packet = (unsigned char *)malloc(MAX_DATA_SIZE * sizeof(unsigned char));
   unsigned char buf;
 
-  int tries = 3;
+  int tries = TRIES;
   alarm_set = FALSE;
 
   while (tries > 0)
@@ -338,8 +343,8 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
         if (tries > 0)
         {
           write(fd, to_write, write_size);
-          alarm(TIMEOUT);
           printf("Alarm triggered, trying again. %d tries left\n", tries);
+          alarm(TIMEOUT);
         }
       }
 
@@ -376,9 +381,10 @@ int nc_read(int fd, unsigned char **read_package)
   int received = FALSE, ua = FALSE;
   int res;
   unsigned char buf;
-  unsigned char *packet = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
+  unsigned char *packet;
   while (!received)
   {
+    packet = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
     STOP = FALSE;
     ua = FALSE;
     count = 0;
@@ -519,6 +525,7 @@ int nc_read(int fd, unsigned char **read_package)
       printf("Sent Feedback\n");
     }
     flag_state = 1;
+    if (!received) {free(packet);}
   }
   *read_package = packet;
   return count;
