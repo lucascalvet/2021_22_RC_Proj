@@ -96,7 +96,6 @@ int llopen(char *port, enum Role flag)
     nc_read(fd, &request);
     if (request == NULL)
     {
-      free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_SET)
@@ -162,34 +161,34 @@ int llclose(int fd, enum Role flag)
     printf("HERE1\n");
     if (request == NULL)
     {
-      //free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_DISC)
     {
-      //free(request);
+      free(request);
       printf("Got wrong instruction, expected DISC.");
       return -1;
     }
-    //free(request);
+    free(request);
     printf("HERE2\n");
     nc_read(fd, &request);
     printf("HERE3\n");
     if (request == NULL)
     {
-      //free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_UA)
     {
-      //free(request);
+      free(request);
       printf("Got wrong instruction, expected UA.");
       return -1;
     }
-    //free(request);
+    free(request);
     printf("HERE F\n");
     printf("Receiver - Connection closed.\n");
   }
+
+  sleep(1);
 
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
   {
@@ -257,7 +256,6 @@ int llread(int fd, unsigned char **buffer)
   printf("READ2");
   if (request == NULL || size == 0)
   {
-    free(request);
     error(1, 0, "nc_read() returned NULL, this should not happen\n");
   }
   printf("READ3");
