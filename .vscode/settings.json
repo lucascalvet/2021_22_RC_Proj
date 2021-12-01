@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "app.h": "c"
+        "app.h": "c",
+        "link_layer.h": "c"
     }
 }

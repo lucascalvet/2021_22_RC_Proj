@@ -17,6 +17,8 @@
 #include "link_layer.h"
 #include "app.h"
 
+static int read_file_size = 0;
+
 int main(int argc, char **argv)
 {
   int port_fd, file_fd;
@@ -78,22 +80,17 @@ int main(int argc, char **argv)
     error(1, errno, "unable to open/create the file");
   }
 
-  printf("HERE1\n");
-
   while (!end_package_stream)
   {
-    printf("HERE1.5\n");
     if ((package_len = llread(port_fd, &package)) < 0)
     {
       free(package);
       error(1, errno, "llread failed");
     }
-    printf("HERE2\n");
 
     switch (package[0])
     {
     case DP:
-      printf("HERE DP\n");
       package_len = read_data_package(package, &seq_n, &data);
       int written_size = write(file_fd, data, package_len);
       free(data);
@@ -102,9 +99,9 @@ int main(int argc, char **argv)
         free(package);
         error(1, errno, "write to file failed");
       }
+      read_file_size += written_size;
       break;
     case CP_END:
-      printf("HERE CPEND\n");
       package_len = read_control_package(package, package_len, &end_file_size, &end_file_name);
       printf("Final Control Package Read\n");
       if (strcmp(end_file_name, file_name) != 0)
@@ -116,9 +113,9 @@ int main(int argc, char **argv)
       }
       free(end_file_name);
 
-      if (end_file_size != file_size)
+      if (end_file_size != file_size || end_file_size != read_file_size)
       {
-        printf("End file size: %d :-: Begin file size: %d\n", end_file_size, file_size);
+        printf("End file size: %d :-: Begin file size: %d :-: Received file size: %d\n", end_file_size, file_size, read_file_size);
         free(package);
         free(end_file_name);
         error(1, errno, "File information isn't the same");
@@ -136,6 +133,7 @@ int main(int argc, char **argv)
   printf("FILENAME: %s\n", file_name);
   printf("FILESIZE: %d\n", file_size);
 
+
   free(file_name);
 
   if (llclose(port_fd, RECEIVER) != 0)
@@ -147,4 +145,8 @@ int main(int argc, char **argv)
   {
     error(1, errno, "File didn't close properly");
   }
+
+  write_receiver_stats(read_file_size);
+
+  return 0;
 }

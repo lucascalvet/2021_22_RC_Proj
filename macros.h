@@ -24,8 +24,9 @@
 #define C_INFO_N 0x40
 
 #define MAX_DATA_SIZE 200
-#define MAX_PACKAGE_SIZE 500
+#define MAX_PACKET_SIZE 500
 #define TIMEOUT 3
+#define TRIES 5
 
 #define ESCAPE 0x7D
 #define FLAG_REP 0x5E

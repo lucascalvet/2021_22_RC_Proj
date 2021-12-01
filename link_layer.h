@@ -6,6 +6,9 @@
 
 enum Role {TRANSMITTER, RECEIVER};
 
+void write_sender_stats(int file_size);
+void write_receiver_stats(int file_size);
+
 int llopen(char * port, enum Role flag);
 int llwrite(int fd, unsigned char * buffer, int length);
 //int llread(int fd, unsigned char * buffer);

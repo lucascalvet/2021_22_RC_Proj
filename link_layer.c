@@ -13,14 +13,46 @@
 
 #include "link_layer.h"
 
+extern int verbose;
 struct termios oldtio;
 static int alarm_set = FALSE;
 int n = 0;
+static int sender_set_count = 0, receiver_ua_count = 0;
+static int sender_inf_count = 0, receiver_rr_count = 0, receiver_rej_count = 0;
+static int sender_ua_count = 0, sender_disc_count = 0, receiver_disc_count = 0;
 
 void set_alarm()
 {
-  printf("Alarm Sent\n");
+  //printf("Alarm Sent\n");
   alarm_set = TRUE;
+}
+
+void write_sender_stats(int file_size)
+{
+  printf("Protocol Statistics\n");
+  printf("Size Sent: %d\n", file_size);
+  printf("Sent %d SET Frames\n", sender_set_count);
+  printf("Sent %d INF Frames\n", sender_inf_count);
+  printf("Sent %d DISC Frames\n", sender_disc_count);
+  printf("Sent %d UA Frames\n", sender_ua_count);
+  printf("Received %d UA Frames\n", receiver_ua_count);
+  printf("Received %d RR Frames\n", receiver_rr_count);
+  printf("Received %d REJ Frames\n", receiver_rej_count);
+  printf("Received %d DISC Frames\n", receiver_disc_count);
+}
+
+void write_receiver_stats(int file_size)
+{
+  printf("Protocol Statistics\n");
+  printf("Size Received: %d\n", file_size);
+  printf("Received %d SET Frames\n", sender_set_count);
+  printf("Received %d INF Frames\n", sender_inf_count);
+  printf("Received %d DISC Frames\n", sender_disc_count);
+  printf("Received %d UA Frames\n", sender_ua_count);
+  printf("Sent %d UA Frames\n", receiver_ua_count);
+  printf("Sent %d RR Frames\n", receiver_rr_count);
+  printf("Sent %d REJ Frames\n", receiver_rej_count);
+  printf("Sent %d DISC Frames\n", receiver_disc_count);
 }
 
 int llopen(char *port, enum Role flag)
@@ -28,23 +60,22 @@ int llopen(char *port, enum Role flag)
   struct termios newtio;
 
   /*
-      Open serial port device for reading and writing and not as controlling tty
-      because we don't want to get killed if linenoise sends CTRL-C.
-    */
-
+    Open serial port device for reading and writing and not as controlling tty
+    because we don't want to get killed if linenoise sends CTRL-C.
+  */
   int fd = open(port, O_RDWR | O_NOCTTY);
   if (fd < 0)
   {
-    perror(port);
-    exit(-1);
+    return -1;
   }
 
+  /* save current port settings */
   if (tcgetattr(fd, &oldtio) == -1)
-  { /* save current port settings */
-    perror("tcgetattr");
-    exit(-1);
+  {
+    return -1;
   }
 
+  /* generate new port settings */
   bzero(&newtio, sizeof(newtio));
   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
   newtio.c_iflag = IGNPAR;
@@ -59,11 +90,8 @@ int llopen(char *port, enum Role flag)
 
   if (tcsetattr(fd, TCSANOW, &newtio) == -1)
   {
-    perror("tcsetattr");
-    exit(-1);
+    return -1;
   }
-
-  printf("New termios structure set\n");
 
   if (flag == TRANSMITTER)
   {
@@ -76,19 +104,18 @@ int llopen(char *port, enum Role flag)
 
     unsigned char *response;
     response = timeout_write(fd, set, 5);
-    if (response == NULL)
+    sender_set_count++;
+    if (response == NULL) // There was no response after a set number of tries
     {
       free(response);
-      printf("No response after 3 tries.\n");
-      return -1;
+      return -2;
     }
-    if (response[1] != C_UA)
+    if (response[1] != C_UA) // Got unexpected response
     {
       free(response);
-      printf("Wrong response.\n");
-      return -1;
+      return -3;
     }
-    printf("Transmitter - Connection established.\n");
+    receiver_ua_count++;
     free(response);
   }
   else if (flag == RECEIVER)
@@ -128,10 +155,11 @@ int llclose(int fd, enum Role flag)
 
     unsigned char *response;
     response = timeout_write(fd, disc, 5);
+    sender_disc_count++;
     if (response == NULL)
     {
       free(response);
-      printf("No response to DISC after 3 tries.\n");
+      printf("No response to DISC after %d tries.\n", TRIES);
       return -1;
     }
     if (response[1] != C_DISC)
@@ -140,6 +168,7 @@ int llclose(int fd, enum Role flag)
       printf("Wrong response, expected DISC.\n");
       return -1;
     }
+    receiver_disc_count++;
     free(response);
 
     unsigned char ua[5];
@@ -153,6 +182,7 @@ int llclose(int fd, enum Role flag)
       error(0, errno, "error writing UA");
       return -1;
     }
+    sender_ua_count++;
 
     printf("Transmitter - Connection closed.\n");
   }
@@ -189,7 +219,7 @@ int llclose(int fd, enum Role flag)
       return -1;
     }
     //free(request);
-    printf("HERE F\n");
+    //printf("HERE F\n");
     printf("Receiver - Connection closed.\n");
   }
 
@@ -214,22 +244,33 @@ int llwrite(int fd, unsigned char *buffer, int length)
   unsigned char *response;
 
   int size = make_info(buffer, length, n, &info_frame);
+  int try_again;
   do
   {
+    sender_inf_count++;
+    
+    try_again = FALSE;
     response = timeout_write(fd, info_frame, size);
-    if (response == NULL)
+    if (response == NULL) // There was no response after a set number of tries
     {
       free(response);
-      error(1, 0, "No response after 3 tries.\n");
+      return -2;
     }
-    if (response[1] == C_REJ_N || response[1] == C_REJ)
-    {
-      free(response);
-      printf("Data frame rejected, trying again...\n");
-    }
-  } while (response[1] == C_REJ_N || response[1] == C_REJ || (response[1] == C_RR_N && n) || (response[1] == C_RR && !n));
 
-  if (response[1] != C_RR_N && response[1] != C_RR)
+    if (response[1] == C_REJ_N || response[1] == C_REJ || (response[1] == C_RR_N && n) || (response[1] == C_RR && !n))
+    {
+      try_again = TRUE;
+      if (response[1] == C_REJ_N || response[1] == C_REJ) receiver_rej_count++;
+      else receiver_rr_count++;
+      
+      free(response);
+      if (verbose)
+        printf("[llwrite] Data frame rejected by receiver, trying again...\n");
+    }
+
+  } while (try_again);
+
+  if (response[1] != C_RR_N && response[1] != C_RR) // Got unexpected response
   {
     free(response);
     error(1, 0, "Wrong response.\n");
@@ -244,38 +285,38 @@ int llwrite(int fd, unsigned char *buffer, int length)
     {
       n = 1;
     }
+    receiver_rr_count++;
+    free(response);
   }
-
-  free(response);
 
   return size;
 }
 
 int llread(int fd, unsigned char **buffer)
 {
-  printf("READ1");
+  //printf("READ1");
   //unsigned char * request = (unsigned char *) malloc(MAX_DATA_SIZE * sizeof(unsigned char));
   unsigned char *request;
   int size = nc_read(fd, &request);
-  printf("READ2");
+  //printf("READ2");
   if (request == NULL || size == 0)
   {
     free(request);
     error(1, 0, "nc_read() returned NULL, this should not happen\n");
   }
-  printf("READ3");
+  //printf("READ3");
   if (request[1] != C_INFO && request[1] != C_INFO_N)
   {
     free(request);
     printf("Got wrong instruction, expected INFO.");
     return -1;
   }
-  printf("READ4");
+  //printf("READ4");
 
-  *buffer = (unsigned char *) malloc((size - 4) * sizeof(unsigned char));
+  *buffer = (unsigned char *)malloc((size - 4) * sizeof(unsigned char));
   memcpy(*buffer, &request[3], size - 4);
   free(request);
-  printf("READ5");
+  //printf("READ5");
   return size - 4;
 }
 
@@ -291,7 +332,7 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
   unsigned char *packet = (unsigned char *)malloc(MAX_DATA_SIZE * sizeof(unsigned char));
   unsigned char buf;
 
-  int tries = 3;
+  int tries = TRIES;
   alarm_set = FALSE;
 
   while (tries > 0)
@@ -381,7 +422,7 @@ int nc_read(int fd, unsigned char **read_package)
   int received = FALSE;
   int res;
   unsigned char buf;
-  unsigned char *packet = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
+  unsigned char *packet = (unsigned char *)malloc(MAX_PACKET_SIZE * sizeof(unsigned char));
   while (!received)
   {
     STOP = FALSE;
@@ -439,18 +480,24 @@ int nc_read(int fd, unsigned char **read_package)
       {
       case C_SET:
         printf("SET Received. Sending UA\n");
+        sender_set_count++;
+        receiver_ua_count++;
         response[2] = C_UA;
         break;
       case C_DISC:
         printf("DISC Received. Sending DISC\n");
+        sender_disc_count++;
+        receiver_disc_count++;
         response[1] = A_RECEIVER;
         response[2] = C_DISC;
         break;
       case C_INFO:
       case C_INFO_N:
+        sender_inf_count++;
         if ((n == 0 && packet[1] == C_INFO_N) || (n == 1 && packet[1] == C_INFO))
         {
           printf("Received unexpected sequence number data packet, possible duplicate. Sending RR.\n");
+
           if (n)
           {
             response[2] = C_RR_N;
@@ -463,13 +510,13 @@ int nc_read(int fd, unsigned char **read_package)
           received = FALSE;
           response[3] = response[1] ^ response[2];
           write(fd, response, write_size);
+          receiver_rr_count++;
           break;
         }
         unsigned char *destuffed_info;
         printf("Count before BD: %d\n", count);
         count = byte_destuffing(packet, count, &destuffed_info);
         printf("Count after BD: %d\n", count);
-        printf("NC_READ1");
         free(packet);
         packet = destuffed_info;
         if (make_bcc(&packet[3], count - 4) == packet[count - 1])
@@ -486,6 +533,7 @@ int nc_read(int fd, unsigned char **read_package)
             response[2] = C_RR_N;
           }
           printf("Info Body Checks Out. Sending RR and changing expected sequence number to %d.\n", n);
+          receiver_rr_count++;
           //response[2] = C_RR;
         }
         else
@@ -502,10 +550,12 @@ int nc_read(int fd, unsigned char **read_package)
           received = FALSE;
           response[3] = response[1] ^ response[2];
           write(fd, response, write_size);
+          receiver_rej_count++;
         }
         break;
       case C_UA:
         printf("Reading Complete\n");
+        sender_ua_count++;
         break;
 
       default:
@@ -633,7 +683,7 @@ int byte_stuffing(unsigned char *info_frame, int size, unsigned char **result_fr
 
 int byte_destuffing(unsigned char *info_frame, int size, unsigned char **result_frame)
 {
-  unsigned char *stuffed_frame = (unsigned char *)malloc((size - byte_destuffing_count(info_frame, size)) * sizeof(unsigned char));
+  unsigned char *destuffed_frame = (unsigned char *)malloc((size - byte_destuffing_count(info_frame, size)) * sizeof(unsigned char));
   int counter = 0;
   for (int i = 0; i < size; i++)
   {
@@ -642,10 +692,10 @@ int byte_destuffing(unsigned char *info_frame, int size, unsigned char **result_
       switch (info_frame[++i])
       {
       case FLAG_REP:
-        stuffed_frame[counter] = FLAG;
+        destuffed_frame[counter] = FLAG;
         break;
       case ESCAPE_REP:
-        stuffed_frame[counter] = ESCAPE;
+        destuffed_frame[counter] = ESCAPE;
         break;
       default:
         break;
@@ -653,12 +703,12 @@ int byte_destuffing(unsigned char *info_frame, int size, unsigned char **result_
     }
     else
     {
-      stuffed_frame[counter] = info_frame[i];
+      destuffed_frame[counter] = info_frame[i];
     }
     counter++;
   }
 
-  *result_frame = stuffed_frame;
+  *result_frame = destuffed_frame;
   return counter;
 }
 

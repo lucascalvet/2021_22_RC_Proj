@@ -55,7 +55,7 @@ int read_data_package(unsigned char *data_package, int *seq_n, unsigned char **d
 
 int make_control_package(int start, int file_size, char *file_name, unsigned char **control_package)
 {
-    unsigned char *result_package = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
+    unsigned char *result_package = (unsigned char *)malloc(MAX_PACKET_SIZE * sizeof(unsigned char));
     if (start)
     {
         result_package[0] = CP_START;
