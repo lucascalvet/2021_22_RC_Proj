@@ -124,7 +124,6 @@ int llopen(char *port, enum Role flag)
     nc_read(fd, &request);
     if (request == NULL)
     {
-      free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_SET)
@@ -162,12 +161,6 @@ int llclose(int fd, enum Role flag)
       printf("No response to DISC after %d tries.\n", TRIES);
       return -1;
     }
-    if (response[1] != C_DISC)
-    {
-      free(response);
-      printf("Wrong response, expected DISC.\n");
-      return -1;
-    }
     receiver_disc_count++;
     free(response);
 
@@ -194,34 +187,33 @@ int llclose(int fd, enum Role flag)
     printf("HERE1\n");
     if (request == NULL)
     {
-      //free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_DISC)
     {
-      //free(request);
+      free(request);
       printf("Got wrong instruction, expected DISC.");
       return -1;
     }
-    //free(request);
+    free(request);
     printf("HERE2\n");
     nc_read(fd, &request);
     printf("HERE3\n");
     if (request == NULL)
     {
-      //free(request);
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
     }
     if (request[1] != C_UA)
     {
-      //free(request);
+      free(request);
       printf("Got wrong instruction, expected UA.");
       return -1;
     }
-    //free(request);
-    //printf("HERE F\n");
+    free(request);
     printf("Receiver - Connection closed.\n");
   }
+
+  sleep(1);
 
   if (tcsetattr(fd, TCSANOW, &oldtio) == -1)
   {
@@ -242,6 +234,7 @@ int llwrite(int fd, unsigned char *buffer, int length)
 {
   unsigned char *info_frame;
   unsigned char *response;
+  int rej = FALSE;
 
   int size = make_info(buffer, length, n, &info_frame);
   int try_again;
@@ -301,7 +294,6 @@ int llread(int fd, unsigned char **buffer)
   //printf("READ2");
   if (request == NULL || size == 0)
   {
-    free(request);
     error(1, 0, "nc_read() returned NULL, this should not happen\n");
   }
   //printf("READ3");
@@ -384,8 +376,8 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
         if (tries > 0)
         {
           write(fd, to_write, write_size);
-          alarm(TIMEOUT);
           printf("Alarm triggered, trying again. %d tries left\n", tries);
+          alarm(TIMEOUT);
         }
       }
 
@@ -419,16 +411,19 @@ int nc_read(int fd, unsigned char **read_package)
 {
   int STOP = FALSE;
   int count = 0, flag_state = 0; // 0-> Beg | 1->First Batch of Flags | 2->Mid Frame
-  int received = FALSE;
+  int received = FALSE, ua = FALSE;
   int res;
   unsigned char buf;
-  unsigned char *packet = (unsigned char *)malloc(MAX_PACKET_SIZE * sizeof(unsigned char));
+  unsigned char *packet;
   while (!received)
   {
+    packet = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
     STOP = FALSE;
+    ua = FALSE;
     count = 0;
     while (STOP == FALSE && !received)
     {
+      ua = FALSE;
       res = read(fd, &buf, 1);
       if (res)
       {
@@ -554,6 +549,7 @@ int nc_read(int fd, unsigned char **read_package)
         }
         break;
       case C_UA:
+        ua = TRUE;
         printf("Reading Complete\n");
         sender_ua_count++;
         break;
@@ -563,7 +559,7 @@ int nc_read(int fd, unsigned char **read_package)
         break;
       }
 
-      if (received)
+      if (received && !ua)
       {
         response[3] = response[1] ^ response[2];
         write(fd, response, write_size);
@@ -571,6 +567,7 @@ int nc_read(int fd, unsigned char **read_package)
       printf("Sent Feedback\n");
     }
     flag_state = 1;
+    if (!received) {free(packet);}
   }
   *read_package = packet;
   return count;

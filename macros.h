@@ -28,6 +28,7 @@
 #define TIMEOUT 3
 #define TRIES 5
 
+
 #define ESCAPE 0x7D
 #define FLAG_REP 0x5E
 #define ESCAPE_REP 0x5D
