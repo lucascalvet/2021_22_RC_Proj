@@ -161,6 +161,12 @@ int llclose(int fd, enum Role flag)
       printf("No response to DISC after %d tries.\n", TRIES);
       return -1;
     }
+    if (response[1] != C_DISC)
+    {
+      free(response);
+      printf("Wrong response, expected DISC.\n");
+      return -1;
+    }
     receiver_disc_count++;
     free(response);
 
