@@ -188,9 +188,7 @@ int llclose(int fd, enum Role flag)
   else if (flag == RECEIVER)
   {
     unsigned char *request;
-    printf("HERE!!!!!!!!\n");
     nc_read(fd, &request);
-    printf("HERE1\n");
     if (request == NULL)
     {
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
@@ -202,9 +200,7 @@ int llclose(int fd, enum Role flag)
       return -1;
     }
     free(request);
-    printf("HERE2\n");
     nc_read(fd, &request);
-    printf("HERE3\n");
     if (request == NULL)
     {
       error(1, 0, "nc_read() returned NULL, this should not happen\n");
@@ -293,28 +289,23 @@ int llwrite(int fd, unsigned char *buffer, int length)
 
 int llread(int fd, unsigned char **buffer)
 {
-  //printf("READ1");
   //unsigned char * request = (unsigned char *) malloc(MAX_DATA_SIZE * sizeof(unsigned char));
   unsigned char *request;
   int size = nc_read(fd, &request);
-  //printf("READ2");
   if (request == NULL || size == 0)
   {
     error(1, 0, "nc_read() returned NULL, this should not happen\n");
   }
-  //printf("READ3");
   if (request[1] != C_INFO && request[1] != C_INFO_N)
   {
     free(request);
     printf("Got wrong instruction, expected INFO.");
     return -1;
   }
-  //printf("READ4");
 
   *buffer = (unsigned char *)malloc((size - 4) * sizeof(unsigned char));
   memcpy(*buffer, &request[3], size - 4);
   free(request);
-  //printf("READ5");
   return size - 4;
 }
 
@@ -433,8 +424,7 @@ int nc_read(int fd, unsigned char **read_package)
       res = read(fd, &buf, 1);
       if (res)
       {
-
-        printf("Received %d byte: %02X\n", res, buf);
+        if(verbose) printf("Received %d byte: %02X\n", res, buf);
 
         if (buf == FLAG)
         {
@@ -459,7 +449,7 @@ int nc_read(int fd, unsigned char **read_package)
           }
           if (flag_state == 2)
           {
-            printf("Packet Received byte number %d: %02X\n", count, buf);
+            if(verbose) printf("Packet Received byte number %d: %02X\n", count, buf);
             packet[count] = buf;
             count++;
           }
@@ -469,7 +459,7 @@ int nc_read(int fd, unsigned char **read_package)
 
     if (count >= 3 && make_bcc(&packet[0], 2) == packet[2])
     {
-      printf("Frame BCC checked out\n");
+      if(verbose) printf("Frame BCC checked out\n");
       received = TRUE;
       unsigned char response[5];
       response[0] = FLAG;
@@ -480,13 +470,13 @@ int nc_read(int fd, unsigned char **read_package)
       switch (packet[1])
       {
       case C_SET:
-        printf("SET Received. Sending UA\n");
+        if(verbose) printf("SET Received. Sending UA\n");
         sender_set_count++;
         receiver_ua_count++;
         response[2] = C_UA;
         break;
       case C_DISC:
-        printf("DISC Received. Sending DISC\n");
+        if(verbose) printf("DISC Received. Sending DISC\n");
         sender_disc_count++;
         receiver_disc_count++;
         response[1] = A_RECEIVER;
@@ -497,7 +487,7 @@ int nc_read(int fd, unsigned char **read_package)
         sender_inf_count++;
         if ((n == 0 && packet[1] == C_INFO_N) || (n == 1 && packet[1] == C_INFO))
         {
-          printf("Received unexpected sequence number data packet, possible duplicate. Sending RR.\n");
+          if(verbose) printf("Received unexpected sequence number data packet, possible duplicate. Sending RR.\n");
 
           if (n)
           {
@@ -515,9 +505,9 @@ int nc_read(int fd, unsigned char **read_package)
           break;
         }
         unsigned char *destuffed_info;
-        printf("Count before BD: %d\n", count);
+        if(verbose) printf("Count before BD: %d\n", count);
         count = byte_destuffing(packet, count, &destuffed_info);
-        printf("Count after BD: %d\n", count);
+        if(verbose) printf("Count after BD: %d\n", count);
         free(packet);
         packet = destuffed_info;
         if (make_bcc(&packet[3], count - 4) == packet[count - 1])
@@ -533,13 +523,13 @@ int nc_read(int fd, unsigned char **read_package)
             n = 1;
             response[2] = C_RR_N;
           }
-          printf("Info Body Checks Out. Sending RR and changing expected sequence number to %d.\n", n);
+          if(verbose) printf("Info Body Checks Out. Sending RR and changing expected sequence number to %d.\n", n);
           receiver_rr_count++;
           //response[2] = C_RR;
         }
         else
         {
-          printf("Info Body Wrong. Sending REJ\n");
+          if(verbose) printf("Info Body Wrong. Sending REJ\n");
           if (n)
           {
             response[2] = C_REJ_N;
@@ -556,7 +546,7 @@ int nc_read(int fd, unsigned char **read_package)
         break;
       case C_UA:
         ua = TRUE;
-        printf("Reading Complete\n");
+        if(verbose) printf("Reading Complete\n");
         sender_ua_count++;
         break;
 
@@ -570,7 +560,7 @@ int nc_read(int fd, unsigned char **read_package)
         response[3] = response[1] ^ response[2];
         write(fd, response, write_size);
       }
-      printf("Sent Feedback\n");
+      if(verbose) printf("Sent Feedback\n");
     }
     flag_state = 1;
     if (!received) {free(packet);}

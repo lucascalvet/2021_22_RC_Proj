@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     package_len = llread(port_fd, &package);
     if (package[0] == CP_START)
     {
-      printf("Start Control Package Received\n");
+      if(verbose) printf("Start Control Package Received\n");
       read_control_package(package, package_len, &file_size, &file_name);
       received_start_cp = TRUE;
     }
@@ -103,10 +103,10 @@ int main(int argc, char **argv)
       break;
     case CP_END:
       package_len = read_control_package(package, package_len, &end_file_size, &end_file_name);
-      printf("Final Control Package Read\n");
+      if(verbose) printf("Final Control Package Read\n");
       if (strcmp(end_file_name, file_name) != 0)
       {
-        printf("End file name: %s :-: Begin file name: %s\n", end_file_name, file_name);
+        if(verbose) printf("End file name: %s :-: Begin file name: %s\n", end_file_name, file_name);
         free(package);
         free(end_file_name);
         error(1, errno, "File information isn't the same");
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 
       if (end_file_size != file_size || end_file_size != read_file_size)
       {
-        printf("End file size: %d :-: Begin file size: %d :-: Received file size: %d\n", end_file_size, file_size, read_file_size);
+        if(verbose) printf("End file size: %d :-: Begin file size: %d :-: Received file size: %d\n", end_file_size, file_size, read_file_size);
         free(package);
         free(end_file_name);
         error(1, errno, "File information isn't the same");
@@ -123,17 +123,18 @@ int main(int argc, char **argv)
       end_package_stream = TRUE;
       break;
     default:
-      printf("Received unexpected package type: %X\n", package[0]);
+      if(verbose) printf("Received unexpected package type: %X\n", package[0]);
       break;
     }
     free(package);
   }
 
-  printf("Package Stream Ended\n");
-  printf("FILENAME: %s\n", file_name);
-  printf("FILESIZE: %d\n", file_size);
-
-
+  if(verbose){
+    printf("Package Stream Ended\n");
+    printf("FILENAME: %s\n", file_name);
+    printf("FILESIZE: %d\n", file_size);
+  }
+  
   free(file_name);
 
   if (llclose(port_fd, RECEIVER) != 0)

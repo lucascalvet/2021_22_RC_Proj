@@ -34,7 +34,7 @@ int read_data_package(unsigned char *data_package, int *seq_n, unsigned char **d
 {
     if (data_package[0] != DP)
     {
-        printf("Not a data package inside read dp!\n");
+        printf("Not a data package inside read_data_package!\n");
         return -1;
     }
     *seq_n = data_package[1];
@@ -69,7 +69,6 @@ int make_control_package(int start, int file_size, char *file_name, unsigned cha
 
     /*
     char *size_string = (char *) malloc(sizeof(int));
-    sprintf(size_string, "%d", file_size);
     result_package[2] = strlen(size_string);
     */
     result_package[2] = sizeof(int);
@@ -107,7 +106,7 @@ int read_control_package(unsigned char *control_package, int package_size, int *
 {
     if (control_package[0] != CP_START && control_package[0] != CP_END)
     {
-        printf("Not a control package inside read cp!\n");
+        printf("Not a control package inside read_control_package!\n");
         return -1;
     }
 
