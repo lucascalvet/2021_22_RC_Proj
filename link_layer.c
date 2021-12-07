@@ -259,7 +259,11 @@ int llwrite(int fd, unsigned char *buffer, int length)
         if (verbose)
           printf("[llwrite] Data frame rejected by receiver, trying again...\n");
       } 
-      else receiver_rr_count++;
+      else{
+        receiver_rr_count++;
+        if (verbose)
+          printf("[llwrite] Data frame requested again, trying again...\n");
+      } 
       
       free(response);
     }
