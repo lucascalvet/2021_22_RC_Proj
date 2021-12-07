@@ -414,7 +414,7 @@ int nc_read(int fd, unsigned char **read_package)
   unsigned char *packet;
   while (!received)
   {
-    packet = (unsigned char *)malloc(MAX_PACKAGE_SIZE * sizeof(unsigned char));
+    packet = (unsigned char *)malloc(MAX_PACKET_SIZE * sizeof(unsigned char));
     STOP = FALSE;
     ua = FALSE;
     count = 0;
