@@ -236,7 +236,6 @@ int llwrite(int fd, unsigned char *buffer, int length)
 {
   unsigned char *info_frame;
   unsigned char *response;
-  int rej = FALSE;
 
   int size = make_info(buffer, length, n, &info_frame);
   int try_again;
@@ -255,12 +254,14 @@ int llwrite(int fd, unsigned char *buffer, int length)
     if (response[1] == C_REJ_N || response[1] == C_REJ || (response[1] == C_RR_N && n) || (response[1] == C_RR && !n))
     {
       try_again = TRUE;
-      if (response[1] == C_REJ_N || response[1] == C_REJ) receiver_rej_count++;
+      if (response[1] == C_REJ_N || response[1] == C_REJ){
+        receiver_rej_count++;
+        if (verbose)
+          printf("[llwrite] Data frame rejected by receiver, trying again...\n");
+      } 
       else receiver_rr_count++;
       
       free(response);
-      if (verbose)
-        printf("[llwrite] Data frame rejected by receiver, trying again...\n");
     }
 
   } while (try_again);
