@@ -262,7 +262,7 @@ int llwrite(int fd, unsigned char *buffer, int length)
       else{
         receiver_rr_count++;
         if (verbose)
-          printf("[llwrite] Data frame requested again, trying again...\n");
+          printf("[llwrite] Data frame requested again, trying again... response[1]:%x n:%x\n", response[1], n);
       } 
       
       free(response);
@@ -340,7 +340,7 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
       res = read(fd, &buf, 1);
       if (res)
       {
-        printf("Received %d byte: %02X\n", res, buf);
+        //printf("Received %d byte: %02X\n", res, buf);
 
         if (buf == FLAG)
         {
@@ -364,7 +364,7 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
           }
           if (flag_state == 2)
           {
-            printf("Packet Received byte number %d: %02X\n", count, buf);
+            //printf("Packet Received byte number %d: %02X\n", count, buf);
             packet[count] = buf;
             count++;
           }
@@ -429,7 +429,7 @@ int nc_read(int fd, unsigned char **read_package)
       res = read(fd, &buf, 1);
       if (res)
       {
-        if(verbose) printf("Received %d byte: %02X\n", res, buf);
+        //if(verbose) printf("Received %d byte: %02X\n", res, buf);
 
         if (buf == FLAG)
         {
@@ -454,7 +454,7 @@ int nc_read(int fd, unsigned char **read_package)
           }
           if (flag_state == 2)
           {
-            if(verbose) printf("Packet Received byte number %d: %02X\n", count, buf);
+            //if(verbose) printf("Packet Received byte number %d: %02X\n", count, buf);
             packet[count] = buf;
             count++;
           }
@@ -492,7 +492,7 @@ int nc_read(int fd, unsigned char **read_package)
         sender_inf_count++;
         if ((n == 0 && packet[1] == C_INFO_N) || (n == 1 && packet[1] == C_INFO))
         {
-          if(verbose) printf("Received unexpected sequence number data packet, possible duplicate. Sending RR.\n");
+          if(verbose) printf("Received unexpected sequence number data packet, possible duplicate. Sending RR. packet[1]:%x n:%x\n", packet[1], n);
 
           if (n)
           {
