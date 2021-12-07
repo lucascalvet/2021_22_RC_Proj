@@ -18,6 +18,7 @@
 #include "app.h"
 
 static int read_file_size = 0;
+int verbose = FALSE;
 
 int main(int argc, char **argv)
 {
@@ -30,7 +31,7 @@ int main(int argc, char **argv)
   unsigned char *data;
   char *end_file_name;
 
-  if (argc == 2 || argc == 3)
+  if (argc >= 2 && argc <= 4)
   {
     if (strncmp(argv[1], "/dev/ttyS", 9) != 0)
     {
@@ -65,15 +66,37 @@ int main(int argc, char **argv)
     free(package);
   }
 
-  if (argc == 3)
-  {
-    file_fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  switch (argc){
+    case 2:
+      file_fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+      break;
+    case 3:
+      if (strcmp("-v", argv[2]) == 0){
+        verbose = TRUE;
+        file_fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+      }
+      else{
+        file_fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+      }
+      break;
+    case 4:
+      if (strcmp("-v", argv[2]) == 0){
+        verbose = TRUE;
+        file_fd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+      }
+      else if(strcmp("-v", argv[3]) == 0){
+        verbose = TRUE;
+        file_fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+      }
+      else{
+        printf("Usage:\twnc SerialPort OutputFile\n\twnc /dev/ttySX <path_file>\n\tex: nserial /dev/ttyS1 pinguim.gif\n");
+      }
+      break;
+    default:
+      printf("Usage:\twnc SerialPort OutputFile\n\twnc /dev/ttySX <path_file>\n\tex: nserial /dev/ttyS1 pinguim.gif\n");
+      break;
   }
-  else
-  {
-    file_fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-  }
-
+  
   if (file_fd == -1)
   {
     free(file_name);
