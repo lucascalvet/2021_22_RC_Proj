@@ -1,5 +1,5 @@
-#ifndef MACROS_H
-#define MACROS_H
+#ifndef MACROS_H_
+#define MACROS_H_
 
 #define BAUDRATE B38400
 #define MODEMDEVICE "/dev/ttyS1"
@@ -40,4 +40,4 @@
 #define CP_T_FSIZE 0x00
 #define CP_T_FNAME 0x01
 
-#endif
+#endif  // MACROS_H_

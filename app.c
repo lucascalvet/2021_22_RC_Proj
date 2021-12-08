@@ -6,10 +6,9 @@
 #include <strings.h>
 #include <string.h>
 #include <unistd.h>
-//#include <signal.h>
 
-#include "macros.h"
-#include "app.h"
+#include "./macros.h"
+#include "./app.h"
 
 int make_data_package(int seq_n, unsigned char *data, int size, unsigned char **data_package)
 {

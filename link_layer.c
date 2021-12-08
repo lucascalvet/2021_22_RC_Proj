@@ -11,7 +11,8 @@
 #include <error.h>
 #include <errno.h>
 
-#include "link_layer.h"
+#include "./link_layer.h"
+#include "./macros.h"
 
 extern int verbose;
 struct termios oldtio;
@@ -242,7 +243,7 @@ int llwrite(int fd, unsigned char *buffer, int length)
   do
   {
     sender_inf_count++;
-    
+
     try_again = FALSE;
     response = timeout_write(fd, info_frame, size);
     if (response == NULL) // There was no response after a set number of tries
@@ -254,17 +255,19 @@ int llwrite(int fd, unsigned char *buffer, int length)
     if (response[1] == C_REJ_N || response[1] == C_REJ || (response[1] == C_RR_N && n) || (response[1] == C_RR && !n))
     {
       try_again = TRUE;
-      if (response[1] == C_REJ_N || response[1] == C_REJ){
+      if (response[1] == C_REJ_N || response[1] == C_REJ)
+      {
         receiver_rej_count++;
         if (verbose)
           printf("[llwrite] Data frame rejected by receiver, trying again...\n");
-      } 
-      else{
+      }
+      else
+      {
         receiver_rr_count++;
         if (verbose)
           printf("[llwrite] Data frame requested again, trying again... response[1]:%x n:%x\n", response[1], n);
-      } 
-      
+      }
+
       free(response);
     }
 
@@ -464,7 +467,8 @@ int nc_read(int fd, unsigned char **read_package)
 
     if (count >= 3 && make_bcc(&packet[0], 2) == packet[2])
     {
-      if(verbose) printf("Frame BCC checked out\n");
+      if (verbose)
+        printf("Frame BCC checked out\n");
       received = TRUE;
       unsigned char response[5];
       response[0] = FLAG;
@@ -475,13 +479,15 @@ int nc_read(int fd, unsigned char **read_package)
       switch (packet[1])
       {
       case C_SET:
-        if(verbose) printf("SET Received. Sending UA\n");
+        if (verbose)
+          printf("SET Received. Sending UA\n");
         sender_set_count++;
         receiver_ua_count++;
         response[2] = C_UA;
         break;
       case C_DISC:
-        if(verbose) printf("DISC Received. Sending DISC\n");
+        if (verbose)
+          printf("DISC Received. Sending DISC\n");
         sender_disc_count++;
         receiver_disc_count++;
         response[1] = A_RECEIVER;
@@ -492,7 +498,8 @@ int nc_read(int fd, unsigned char **read_package)
         sender_inf_count++;
         if ((n == 0 && packet[1] == C_INFO_N) || (n == 1 && packet[1] == C_INFO))
         {
-          if(verbose) printf("Received unexpected sequence number data packet, possible duplicate. Sending RR. packet[1]:%x n:%x\n", packet[1], n);
+          if (verbose)
+            printf("Received unexpected sequence number data packet, possible duplicate. Sending RR. packet[1]:%x n:%x\n", packet[1], n);
 
           if (n)
           {
@@ -510,9 +517,11 @@ int nc_read(int fd, unsigned char **read_package)
           break;
         }
         unsigned char *destuffed_info;
-        if(verbose) printf("Count before BD: %d\n", count);
+        if (verbose)
+          printf("Count before BD: %d\n", count);
         count = byte_destuffing(packet, count, &destuffed_info);
-        if(verbose) printf("Count after BD: %d\n", count);
+        if (verbose)
+          printf("Count after BD: %d\n", count);
         free(packet);
         packet = destuffed_info;
         if (make_bcc(&packet[3], count - 4) == packet[count - 1])
@@ -528,13 +537,15 @@ int nc_read(int fd, unsigned char **read_package)
             n = 1;
             response[2] = C_RR_N;
           }
-          if(verbose) printf("Info Body Checks Out. Sending RR and changing expected sequence number to %d.\n", n);
+          if (verbose)
+            printf("Info Body Checks Out. Sending RR and changing expected sequence number to %d.\n", n);
           receiver_rr_count++;
           //response[2] = C_RR;
         }
         else
         {
-          if(verbose) printf("Info Body Wrong. Sending REJ\n");
+          if (verbose)
+            printf("Info Body Wrong. Sending REJ\n");
           if (n)
           {
             response[2] = C_REJ_N;
@@ -551,7 +562,8 @@ int nc_read(int fd, unsigned char **read_package)
         break;
       case C_UA:
         ua = TRUE;
-        if(verbose) printf("Reading Complete\n");
+        if (verbose)
+          printf("Reading Complete\n");
         sender_ua_count++;
         break;
 
@@ -565,10 +577,14 @@ int nc_read(int fd, unsigned char **read_package)
         response[3] = response[1] ^ response[2];
         write(fd, response, write_size);
       }
-      if(verbose) printf("Sent Feedback\n");
+      if (verbose)
+        printf("Sent Feedback\n");
     }
     flag_state = 1;
-    if (!received) {free(packet);}
+    if (!received)
+    {
+      free(packet);
+    }
   }
   *read_package = packet;
   return count;
@@ -708,123 +724,4 @@ int byte_destuffing(unsigned char *info_frame, int size, unsigned char **result_
 
   *result_frame = destuffed_frame;
   return counter;
-}
-
-int make_sender_set(unsigned char **sender_set)
-{
-  //unsigned char res[5];
-  unsigned char *res = (unsigned char *)malloc(5 * sizeof(unsigned char));
-  res[0] = FLAG;
-  res[1] = A_SENDER;
-  res[2] = C_SET;
-  res[3] = res[1] ^ res[2];
-  res[4] = FLAG;
-
-  *sender_set = res;
-
-  return 5;
-}
-
-int make_receiver_ua(unsigned char **receiver_ua)
-{
-  //unsigned char res[5];
-  unsigned char *res = (unsigned char *)malloc(5 * sizeof(unsigned char));
-  res[0] = FLAG;
-  res[1] = A_RECEIVER;
-  res[2] = C_UA;
-  res[3] = res[1] ^ res[2];
-  res[4] = FLAG;
-
-  *receiver_ua = res;
-
-  return 5;
-}
-
-int make_sender_ua(unsigned char **sender_ua)
-{
-  //unsigned char res[5];
-  unsigned char *res = (unsigned char *)malloc(5 * sizeof(unsigned char));
-  res[0] = FLAG;
-  res[1] = A_SENDER;
-  res[2] = C_UA;
-  res[3] = res[1] ^ res[2];
-  res[4] = FLAG;
-
-  *sender_ua = res;
-
-  return 5;
-}
-
-int make_receiver_rr(unsigned char **receiver_rr, int n_seq)
-{
-  //unsigned char res[5];
-  unsigned char *res = (unsigned char *)malloc(5 * sizeof(unsigned char));
-  res[0] = FLAG;
-  res[1] = A_RECEIVER;
-  if (n_seq)
-  {
-    res[2] = C_RR_N;
-  }
-  else
-  {
-    res[2] = C_RR;
-  }
-  res[3] = res[1] ^ res[2];
-  res[4] = FLAG;
-
-  *receiver_rr = res;
-
-  return 5;
-}
-
-int make_receiver_rej(unsigned char **receiver_rej, int n_seq)
-{
-  //unsigned char res[5];
-  unsigned char *res = (unsigned char *)malloc(5 * sizeof(unsigned char));
-  res[0] = FLAG;
-  res[1] = A_RECEIVER;
-  if (n_seq)
-  {
-    res[2] = C_REJ_N;
-  }
-  else
-  {
-    res[2] = C_REJ;
-  }
-  res[3] = res[1] ^ res[2];
-  res[4] = FLAG;
-
-  *receiver_rej = res;
-
-  return 5;
-}
-
-int make_sender_disc(unsigned char **sender_disc)
-{
-  //unsigned char res[5];
-  unsigned char *res = (unsigned char *)malloc(5 * sizeof(unsigned char));
-  res[0] = FLAG;
-  res[1] = A_SENDER;
-  res[2] = C_DISC;
-  res[3] = res[1] ^ res[2];
-  res[4] = FLAG;
-
-  *sender_disc = res;
-
-  return 5;
-}
-
-int make_receiver_disc(unsigned char **receiver_disc)
-{
-  //unsigned char res[5];
-  unsigned char *res = (unsigned char *)malloc(5 * sizeof(unsigned char));
-  res[0] = FLAG;
-  res[1] = A_RECEIVER;
-  res[2] = C_DISC;
-  res[3] = res[1] ^ res[2];
-  res[4] = FLAG;
-
-  *receiver_disc = res;
-
-  return 5;
 }

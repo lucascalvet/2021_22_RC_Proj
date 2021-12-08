@@ -1,5 +1,3 @@
-/*Non-Canonical Input Processing*/
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -14,8 +12,9 @@
 #include <errno.h>
 #include <error.h>
 
-#include "link_layer.h"
-#include "app.h"
+#include "./link_layer.h"
+#include "./app.h"
+#include "./macros.h"
 
 static int write_file_size = 0;
 int verbose = FALSE;
@@ -31,16 +30,15 @@ int main(int argc, char **argv)
 {
   if (argc < 3 || argc > 4)
   {
-    printf("error: number of arguments\n\nUsage: wnc /dev/ttyS<X> <file_path> [-v]\n\tX is the serial port number\n\tfile_path is the path of the file to write\n\t-v (optional) enables verbose mode\n\t\tex: wnc /dev/ttyS1 pinguim.gif\n");
+    printf("error: number of arguments\n\nUsage:\twnc SerialPort InputFile\n\twnc /dev/ttyS<X> <file_path> [-v]\n\tX is the serial port number\n\tfile_path is the path of the file to read and then send\n\t-v (optional) enables verbose mode\n\tex:./wnc /dev/ttyS1 pinguim.gif\n");
     exit(1);
   }
-
   char port_path[10];
   strncpy(port_path, argv[1], 9);
   port_path[9] = '\0';
   if (strcmp("/dev/ttyS", port_path) != 0)
   {
-    printf("error: invalid port\n\nUsage: wnc /dev/ttyS<X> <file_path> [-v]\n\tX is the serial port number\n\tfile_path is the path of the file to write\n\t-v (optional) enables verbose mode\n\t\tex: wnc /dev/ttyS1 pinguim.gif\n");
+    printf("error: invalid port\n\nUsage:\twnc SerialPort InputFile\n\twnc /dev/ttyS<X> <file_path> [-v]\n\tX is the serial port number\n\tfile_path is the path of the file to read and then send\n\t-v (optional) enables verbose mode\n\tex:./wnc /dev/ttyS1 pinguim.gif\n");
     exit(1);
   }
 
@@ -66,7 +64,7 @@ int main(int argc, char **argv)
   {
     if (strcmp("-v", argv[3]) != 0)
     {
-      printf("error: invalid argument\n\nUsage: wnc /dev/ttyS<X> <file_path> [-v]\n\tX is the serial port number\n\tfile_path is the path of the file to write\n\t-v (optional) enables verbose mode\n\t\tex: wnc /dev/ttyS1 pinguim.gif\n");
+      printf("error: invalid argument\n\nUsage:\twnc SerialPort InputFile\n\twnc /dev/ttyS<X> <file_path> [-v]\n\tX is the serial port number\n\tfile_path is the path of the file to read and then send\n\t-v (optional) enables verbose mode\n\tex:./wnc /dev/ttyS1 pinguim.gif\n");
       exit(1);
     }
     else
@@ -80,7 +78,7 @@ int main(int argc, char **argv)
     error(1, errno, "cannot open the serial port");
   if (port_fd == -2)
     error(1, 0, "no response after %d tries, cannot establish a connection", TRIES);
-  if (port_fd == -2)
+  if (port_fd == -3)
     error(1, 0, "got unexpected response, cannot establish a connection");
   if (port_fd < 0)
     error(1, 0, "error opening the serial port");
