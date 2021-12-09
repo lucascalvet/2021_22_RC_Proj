@@ -1,19 +1,31 @@
+## Sumário
+
+Este trabalho laboratorial foi desenvolvido no âmbito da Unidade Curricular de Redes de Computadores, tendo como objetivo implementar uma aplicação e protocolo que permitissem a transmissão de ficheiros através de uma porta série assíncrona, protegida de possíveis erros de transmissão.
+
+Os objetivos do tabalho, estabelecidos no guião, foram cumpridos com sucesso, tendo sido desenvolvida uma aplicação funcional, capaz de enviar qualquer tipo de ficheiro entre dois computadores, sem perda de dados.
+
 ## Introdução
 
-Este trabalho laboratorial foi desenvolvido no âmbito da Unidade Curricular de Redes de Computadores, tendo como objetivo implementar uma aplicação e protocolo que permitisse a transmissão de ficheiros através de uma porta série assíncrona, protegida de possíveis erros de transmissão.
+O trabalho teve como objetivo desenvolver uma aplicação, suportada por um protocolo de dados, que, com recurso à comunicação por tramas de informação e através de uma porta série, tem a capacidade de transferir ficheiros entre computadores.
 
-Este relatório serve como complemento ao projeto, incluindo uma análise estatística da sua execução. O mesmo será divido nas seguintes secções:
+Este relatório serve como complemento ao projeto, incluindo uma análise estatística da sua execução. O mesmo está divido nas seguintes secções:
 
-- [Arquitetura](#arquitetura)
-- [Estrutura do Código](#estrutura-do-código)
-- [Casos de Uso Principais](#casos-de-uso-principais)
-- [Protocolo de Ligação Lógica](#protocolo-de-ligação-lógica)
-- [Protocolo de Aplicação](#protocolo-de-aplicação)
-- [Validação](#validação)
-- [Eficiência do protocolo de ligação de dados](#eficiência-do-protocolo-de-ligação-de-dados)
-- [Conclusões](#conclusões)
+- [Arquitetura](#arquitetura): Identificação dos blocos funcionais e interfaces.
+- [Estrutura do Código](#estrutura-do-código): Descrição das APIs, principais estruturas de dados, principais funções e a sua relação com a arquitetura.
+- [Casos de Uso Principais](#casos-de-uso-principais): Identificação dos casos de uso e descrição da corrente de chamadas de funções.
+- [Protocolo de Ligação Lógica](#protocolo-de-ligação-lógica): Identificação dos principais aspetos funcionais da ligação lógica e descrição da estratégia de implementação destes aspetos.
+- [Protocolo de Aplicação](#protocolo-de-aplicação): Identificação dos principais aspetos funcionais da camada de aplicação e descrição da estratégia de implementação destes aspetos.
+- [Validação](#validação): Descrição dos testes efetuados com apresentação quantificada dos resultados.
+- [Eficiência do protocolo de ligação de dados](#eficiência-do-protocolo-de-ligação-de-dados): Caraterização estatística da eficiência do protocolo, efetuada recorrendo a medidas sobre o código desenvolvido.
+- [Conclusões](#conclusões): Síntese da informação apresentada nas secções anteriores e reflexão sobre os objetivos de aprendizagem alcançados.
 
 ## Arquitetura
+
+### Camadas de comunicação
+
+### Compilação e execução
+
+
 
 ### Camadas (Layers)
 
@@ -21,36 +33,46 @@ Este relatório serve como complemento ao projeto, incluindo uma análise estat�
 
 ## Casos de Uso Principais
 
-Para fazer a transferência de um ficheiro com writenoncanonical.c e readnoncanonical.c é necessário compilar e executar os referidos programas, em cada computador, respetivamente, e com a porta de série como argumento. No caso do write, será necessário também o argumento com o path do ficheiro a enviar e no caso do read, o utilizador poderá, facultativamente, definir o path do ficheiro de output como argumento. Ambos aceitam a flag `–v` que ativará os prints *verbose*, para debug.
+Para utilizar os programas desenvolvidos, é necessário compilar os mesmos (através do comando `make`) e executá-los com os respetivos argumentos. De seguida encontram-se as instruções de execução dos mesmos.
 
-Compilar **writenoncanonical.c** : `make writer`
+Considera-se `wnc` como o executável resultante da compilação de `writenoncanonical.c` e `rnc` o executável resultante da compilação de `readnoncanonical.c`.
 
-Compilar **readnoncanonical.c** : `make reader`
+---
 
-Considerando, a título de exemplo, `wnc` como o executável resultante da compilação da writenoncanonical.c e `rnc` o executável resultante da compilação da readnoncanonical.c
+Instruções de execução do `wnc`: 
 
-Executar o binário referente ao **writenoncanonical.c** : 
+```  
+./wnc serial_port file_path [-v]
+```
 
-wnc SerialPort InputFile [Verbose Mode]   
-wnc /dev/ttyS<X> <file_path> [-v]
+- **serial_port**: obrigatório, indica o nº da porta de série
+- **file_path**: obrigatório, indica o caminho do ficheiro a enviar
+- **-v**: opcional, ativa o modo verboso  
 
-- X is the serial port number
-- file_path is the path of the file to read and then send
-- v (optional) enables verbose mode  
+Exemplos:
 
-Exemplos: ```./wnc /dev/ttyS1 pinguim.gif\n``` ou ```./wnc /dev/ttyS1 pinguim.gif\n -v```
+- `./wnc /dev/ttyS1 pinguim.gif`
+- `./wnc /dev/ttyS0 images/picture.gif -v`
 
-Executar o binário referente ao **readnoncanonical.c** : 
+---
 
-rnc SerialPort OutputFile [Verbose Mode]   
-rnc /dev/ttyS<X> <file_path> [-v]
+Instruções de execução do `rnc`:  
 
-- X is the serial port number
-- file_path is the path of the file to create
-- v (optional) enables verbose mode  
+``` 
+./rnc serial_port [file_path] [-v]
+```
 
-Exemplos: ```./rnc /dev/ttyS1 pinguim.gif\n``` ou ```./rnc /dev/ttyS1 pinguim.gif\n -v```
+- **port**: obrigatório, indica o nº da porta de série
+- **file_path**: opcional, indica o nome do ficheiro de destino (não estando definido, o ficheiro é guardado com o seu nome original)
+- **-v**: opcional, ativa o modo verboso 
 
+Exemplos:
+
+- `./rnc /dev/ttyS1`
+- `./rnc /dev/ttyS1 -v`
+- `./rnc /dev/ttyS0 picture.gif -v`
+
+<!--
 ---
 
 O writenoncanonical.c irá primeiro ler e tratar dos argumentos. Depois de abrir o ficheiro dado para envio, irá abrir a porta lógica.
@@ -140,10 +162,7 @@ while (!end_package_stream)
 ```
 
 Quando receber o pacote de controlo final, verifica a integridade da escrita, verificando que o nome e tamanho do ficheiro escrito são congruentes com o recebido. Tal como write, fará llclose e close.
-
-
-
-
+-->
 
 ## Protocolo de Ligação Lógica
 
