@@ -24,7 +24,6 @@ static int sender_ua_count = 0, sender_disc_count = 0, receiver_disc_count = 0;
 
 void set_alarm()
 {
-  //printf("Alarm Sent\n");
   alarm_set = TRUE;
 }
 
