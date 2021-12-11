@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -71,7 +70,6 @@ int make_control_package(int start, int file_size, char *file_name, unsigned cha
     result_package[2] = strlen(size_string);
     */
     result_package[2] = sizeof(int);
-    
 
     //memcpy(&result_package[3], size_string, result_package[2]);
     //memcpy(control_package[3], size_string, result_package[2]);
@@ -96,7 +94,7 @@ int make_control_package(int start, int file_size, char *file_name, unsigned cha
         result_package[index + i] = file_name[i];
     }
     //memcpy(&result_package[index], file_name, strlen(file_name));
-    
+
     *control_package = result_package;
     return index + strlen(file_name) + 1;
 }

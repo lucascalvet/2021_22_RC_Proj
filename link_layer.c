@@ -107,7 +107,6 @@ int llopen(char *port, enum Role flag)
     sender_set_count++;
     if (response == NULL) // There was no response after a set number of tries
     {
-      free(response);
       return -2;
     }
     if (response[1] != C_UA) // Got unexpected response
@@ -164,7 +163,6 @@ int llclose(int fd, enum Role flag)
     if (response[1] != C_DISC)
     {
       free(response);
-      printf("Wrong response, expected DISC.\n");
       return -1;
     }
     receiver_disc_count++;
@@ -196,7 +194,7 @@ int llclose(int fd, enum Role flag)
     if (request[1] != C_DISC)
     {
       free(request);
-      printf("Got wrong instruction, expected DISC.");
+      printf("Got wrong instruction, expected DISC.\n");
       return -1;
     }
     free(request);
@@ -208,7 +206,7 @@ int llclose(int fd, enum Role flag)
     if (request[1] != C_UA)
     {
       free(request);
-      printf("Got wrong instruction, expected UA.");
+      printf("Got wrong instruction, expected UA.\n");
       return -1;
     }
     free(request);
@@ -263,8 +261,6 @@ int llwrite(int fd, unsigned char *buffer, int length)
       else
       {
         receiver_rr_count++;
-        if (verbose)
-          printf("[llwrite] Data frame requested again, trying again... response[1]:%x n:%x\n", response[1], n);
       }
 
       free(response);
@@ -306,7 +302,8 @@ int llread(int fd, unsigned char **buffer)
   if (request[1] != C_INFO && request[1] != C_INFO_N)
   {
     free(request);
-    printf("Got wrong instruction, expected INFO.");
+    if (verbose)
+      printf("Got wrong instruction, expected INFO.");
     return -1;
   }
 
@@ -380,7 +377,8 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
         if (tries > 0)
         {
           write(fd, to_write, write_size);
-          printf("Alarm triggered, trying again. %d tries left\n", tries);
+          if (verbose)
+            printf("Alarm triggered, trying again. %d tries left\n", tries);
           alarm(TIMEOUT);
         }
       }
@@ -394,19 +392,22 @@ unsigned char *timeout_write(int fd, unsigned char *to_write, int write_size)
 
     if (STOP && make_bcc(&packet[0], 2) == packet[2])
     {
-      printf("Received correct Feedback\n");
+      if (verbose)
+        printf("Received correct Feedback\n");
       break;
     }
   }
 
   if (tries == 0)
   {
-    printf("Didn't receive confirmation\n");
+    if (verbose)
+      printf("Didn't receive confirmation\n");
     return NULL;
   }
   else
   {
-    printf("Success\n");
+    if (verbose)
+      printf("[timeout_write] Success\n");
     return packet;
   }
 }

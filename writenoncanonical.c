@@ -110,7 +110,8 @@ int main(int argc, char **argv)
     }
     else if (read_size == 0)
     {
-      printf("Finished reading the input file\n");
+      if (verbose)
+        printf("Finished sending the input file\n");
       STOP = TRUE;
     }
     else
@@ -149,7 +150,9 @@ int main(int argc, char **argv)
     error(1, errno, "File didn't close properly");
   }
 
-  write_sender_stats(write_file_size);
+  if (verbose)
+    write_sender_stats(write_file_size);
 
+  printf("Exiting successfully.\n");
   return 0;
 }
