@@ -55,7 +55,7 @@ Os programas desenvolvidos têm como principal caso de uso a transferência de f
 
 ### Compilação e execução
 
-Para utilizar os programas desenvolvidos, é necessário compilar os mesmos (através do comando `make`) e executá-los com os respetivos argumentos. De seguida encontram-se as instruções de execução dos mesmos.
+Para utilizar os programas desenvolvidos, é necessário compilar os mesmos (através do comando `make`) e executá-los com os respetivos argumentos. De seguida encontram-se as instruções de execução dos mesmos:
 
 Considera-se `wnc` como o executável resultante da compilação de `writenoncanonical.c` e `rnc` o executável resultante da compilação de `readnoncanonical.c`.
 
@@ -84,7 +84,7 @@ Instruções de execução do `rnc`:
 ./rnc serial_port [file_path] [-v]
 ```
 
-- **port**: obrigatório, indica o nº da porta de série
+- **serial-port**: obrigatório, indica o nº da porta de série
 - **file_path**: opcional, indica o nome do ficheiro de destino (não estando definido, o ficheiro é guardado com o seu nome original)
 - **-v**: opcional, ativa o modo verboso 
 
@@ -239,6 +239,8 @@ Em todos os testes, os programas correram como esperado e a transmissão dos fic
 Para avaliar a eficiência da implementação do protocolo, foram feitos 4 testes, cada um associado a uma variável diferente. Foram efetuadas três amostras de tempo diferentes para cada teste, tendo sido usada a média das mesmas.
 
 ### Variação do Frame Error Ratio (FER)
+
+![Eficiência em Função da Variação de FER](/report/fer.png)
 
 ### Variação do tamanho das tramas de informação
 
