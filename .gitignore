@@ -2,6 +2,9 @@
 wnc
 rnc
 
+# Visual Studio Code Files
+.vscode
+
 # Prerequisites
 *.d
 
