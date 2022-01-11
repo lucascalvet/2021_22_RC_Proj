@@ -85,7 +85,8 @@
 - `ip route 0.0.0.0 0.0.0.0 172.16.2.254`
 - `ip route 172.16.50.0 255.255.255.0 172.16.51.253`
 - `end`
-- `ip route add default via 172.16.50.254` or `ip route add default via 172.16.51.254` in gnu52 and gnu54
+- `ip route add default via 172.16.51.254` in gnu52 and gnu54
+- `ip route add default via 172.16.50.254` in gnu53
 
 ## Notes
 - Just `ifconfig` shows the IP info.
