@@ -93,19 +93,19 @@ int main(int argc, char **argv)
 {
     if (argc != 2)
     {
-        fprintf(stderr, "INVALID NUMBER OF ARGUMENTS\nUsage: %s ftp://[<user>:<password>@]<host>/<url-path>\n", argv[0]);
+        fprintf(stderr, "Invalid number of arguments.\n\nUsage: %s ftp://[<user>:<password>@]<host>/<url-path>\n", argv[0]);
         exit(-1);
     }
 
     regex_t regex;
 
-    regcomp(&regex, "^ftp://((([[:alnum:]+._-][[:alnum:]+._-]*)(:([[:alnum:]+._-]*)){0,1}){0,1}@){0,1}([[:alnum:]+._-]*)/([[:alnum:]+./_-]*)$", REG_EXTENDED);
+    regcomp(&regex, "^ftp://((([[:alnum:]+._-][[:alnum:]+._-]*)(:([[:alnum:]+._-]*)){0,1}){0,1}@){0,1}([[:alnum:]+._-]*)/([[:alnum:]+./_-][[:alnum:]+./_-]*)$", REG_EXTENDED);
 
     regmatch_t url_regmatch[8];
 
     if (regexec(&regex, argv[1], 8, url_regmatch, 0) != 0)
     {
-        fprintf(stderr, "NO MATCH\nUsage: %s ftp://[<user>:<password>@]<host>/<url-path>\n", argv[0]);
+        fprintf(stderr, "Invalid ftp URL.\n\nUsage: %s ftp://[<user>:<password>@]<host>/<url-path>\n", argv[0]);
         exit(-1);
     }
 
@@ -154,7 +154,9 @@ int main(int argc, char **argv)
     memcpy(path, argv[1] + url_regmatch[7].rm_so * sizeof(char), len);
     path[len] = 0;
 
+#ifdef DEBUG
     printf("Parsed input:\n\tUser: %s\n\tPass: %s\n\tHost: %s\n\tPath: %s\n\n", user, password, host, path);
+#endif
 
     struct hostent *h;
 
@@ -164,7 +166,9 @@ int main(int argc, char **argv)
     }
     free(host);
 
+#ifdef DEBUG
     printf("Resolved host:\n\tHost name: %s\n\tIP Address: %s\n", h->h_name, inet_ntoa(*((struct in_addr *)h->h_addr)));
+#endif
 
     int socket_fd = connection(inet_ntoa(*((struct in_addr *)h->h_addr)), 21);
 
@@ -232,7 +236,9 @@ int main(int argc, char **argv)
     free(reply);
     reply = NULL;
 
+#ifdef DEBUG
     printf("\tFile address: %s:%d\n\n", ip, port);
+#endif
 
     char *filename = basename(path);
 
@@ -248,14 +254,14 @@ int main(int argc, char **argv)
     free(reply);
     reply = NULL;
 
-    printf("Saving to %s...\n", filename);
+    printf("Downloading to %s...\n", filename);
     int output_fd = creat(filename, 666);
     if (output_fd == -1)
     {
         error(1, errno, "error creating new file");
     }
     free(path);
-    
+
     char readbuf[BUFFER_SIZE];
     size_t nread;
     while ((nread = read(file_socket_fd, readbuf, BUFFER_SIZE)) > 0)
@@ -294,4 +300,3 @@ int main(int argc, char **argv)
     printf("Transfer completed! Exiting.\n");
     return 0;
 }
-
