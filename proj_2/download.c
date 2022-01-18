@@ -255,7 +255,7 @@ int main(int argc, char **argv)
     reply = NULL;
 
     printf("Downloading to %s...\n", filename);
-    int output_fd = creat(filename, 666);
+    int output_fd = creat(filename, 0666);
     if (output_fd == -1)
     {
         error(1, errno, "error creating new file");
