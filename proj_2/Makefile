@@ -7,6 +7,9 @@ SRC = download.c
 
 all: download
 
+debug: CFLAGS += -DDEBUG
+debug: download
+
 download: $(SRC)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
 
