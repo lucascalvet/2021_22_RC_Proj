@@ -1,5 +1,3 @@
-# RC Report 2
-
 ## Sumário
 
 O objetivo do segundo trabalho laboratorial foi desenvolver uma aplicação de download, assim como configurar e estudar uma rede de computadores que nos permitisse utilizar a aplicação desenvolvida. A aplicação de download utiliza o protocolo FTP (File Transfer Protocol) para transferir um ficheiro de um servidor que implementa esse protocolo. A rede de computadores configurada baseou-se em quatro experiências seguidas durante as aulas práticas, que foram analisadas utilizando os *logs* em anexo.
@@ -134,9 +132,9 @@ Quando o computador com o IP de destino certo receber o protocolo, responderá c
 
 As tramas recebidas podem ser ARP, IP ou ICMP; a distinção verifica-se ao inspecionar o cabeçalho do pacote, onde o valor type é:
 
-- `0x0806 para ARP`
-- `0x0800 para IP`
-- `0x0800 com 1 no campo tipo de serviço para ICMP`
+- `0x0806` para ARP
+- `0x0800` para IP
+- `0x0800` com 1 no campo tipo de serviço para ICMP
 
 Os tamanhos das tramas podem ser analisados com o Wireshark.
 Também com o Wireshark verifica-se o ocasional envio de tramas loopback, que permitem um computador confirmar a correta configuração de rede ao receber respostas de si próprio.
@@ -149,9 +147,9 @@ A experiência 2 envolveu a configuração de duas VLAN (redes virtuais locais) 
 
 A configuração de cada vlan é feita no GTKTERM ligado ao switch, iniciada pelo comando `configure terminal`. Para criar uma rede basta escrever o comando `vlan`, procedimento que realizamos para criar ambas as redes. Para adicionar uma porta a uma das redes a sequência de comandos é a seguinte :
 
-- `interface fa 0/[número da porta]`
+- `interface fa 0/[numero da porta]`
 - `switchport mode access`
-- `switchport access vlan [número da rede]`  
+- `switchport access vlan [numero da rede]`  
 
 Nesta experiência, adicionamos a porta 1 (conectada ao gnu53) e a porta 2 (conectada ao gnu54) à vlan50 e a porta 13 (conectada ao gnu52) à vlan51.
 Por último para sair do modo de configuração do switch é necessário sair com o comando `end`.
@@ -795,15 +793,15 @@ No Time           Source                Destination           Protocol Length In
 ```
 No Time           Source                Destination           Protocol Length Info
  1 0.000000000    10.0.2.4              216.21.3.77           TLSv1.2  85     Encrypted Alert
- 2 0.000304739    10.0.2.4              216.21.3.77           TCP      54     57734 → 443 [FIN, ACK] Seq=32 Ack=1 Win=62780 Len=0
- 3 0.000951757    216.21.3.77           10.0.2.4              TCP      60     443 → 57734 [ACK] Seq=1 Ack=33 Win=32093 Len=0
+ 2 0.000304739    10.0.2.4              216.21.3.77           TCP      54     57734 -> 443 [FIN, ACK] Seq=32 Ack=1 Win=62780 Len=0
+ 3 0.000951757    216.21.3.77           10.0.2.4              TCP      60     443 -> 57734 [ACK] Seq=1 Ack=33 Win=32093 Len=0
  4 0.001671802    10.0.2.4              216.21.3.77           TLSv1.2  85     Encrypted Alert
- 5 0.001929592    10.0.2.4              216.21.3.77           TCP      54     57732 → 443 [FIN, ACK] Seq=32 Ack=1 Win=62780 Len=0
- 6 0.002162015    216.21.3.77           10.0.2.4              TCP      60     443 → 57732 [ACK] Seq=1 Ack=33 Win=32093 Len=0
+ 5 0.001929592    10.0.2.4              216.21.3.77           TCP      54     57732 -> 443 [FIN, ACK] Seq=32 Ack=1 Win=62780 Len=0
+ 6 0.002162015    216.21.3.77           10.0.2.4              TCP      60     443 -> 57732 [ACK] Seq=1 Ack=33 Win=32093 Len=0
  7 0.165530554    216.21.3.77           10.0.2.4              TLSv1.2  270    Application Data
- 8 0.165557390    10.0.2.4              216.21.3.77           TCP      54     57734 → 443 [RST] Seq=33 Win=0 Len=0
+ 8 0.165557390    10.0.2.4              216.21.3.77           TCP      54     57734 -> 443 [RST] Seq=33 Win=0 Len=0
  9 0.168770583    216.21.3.77           10.0.2.4              TLSv1.2  301    Application Data, Encrypted Alert
-10 0.168802033    10.0.2.4              216.21.3.77           TCP      54     57732 → 443 [RST] Seq=33 Win=0 Len=0
+10 0.168802033    10.0.2.4              216.21.3.77           TCP      54     57732 -> 443 [RST] Seq=33 Win=0 Len=0
 11 2.558322192    10.0.2.4              9.9.9.9               DNS      73     Standard query 0xfbc7 A parlamento.pt
 12 2.558426619    10.0.2.4              9.9.9.9               DNS      73     Standard query 0x1cd9 AAAA parlamento.pt
 13 2.585301271    9.9.9.9               10.0.2.4              DNS      89     Standard query response 0xfbc7 A parlamento.pt A 88.157.195.115
