@@ -1,0 +1,31 @@
+No Time           Source                Destination           Protocol Length Info
+ 1 0.000000000    10.0.2.4              216.21.3.77           TLSv1.2  85     Encrypted Alert
+ 2 0.000304739    10.0.2.4              216.21.3.77           TCP      54     57734 → 443 [FIN, ACK] Seq=32 Ack=1 Win=62780 Len=0
+ 3 0.000951757    216.21.3.77           10.0.2.4              TCP      60     443 → 57734 [ACK] Seq=1 Ack=33 Win=32093 Len=0
+ 4 0.001671802    10.0.2.4              216.21.3.77           TLSv1.2  85     Encrypted Alert
+ 5 0.001929592    10.0.2.4              216.21.3.77           TCP      54     57732 → 443 [FIN, ACK] Seq=32 Ack=1 Win=62780 Len=0
+ 6 0.002162015    216.21.3.77           10.0.2.4              TCP      60     443 → 57732 [ACK] Seq=1 Ack=33 Win=32093 Len=0
+ 7 0.165530554    216.21.3.77           10.0.2.4              TLSv1.2  270    Application Data
+ 8 0.165557390    10.0.2.4              216.21.3.77           TCP      54     57734 → 443 [RST] Seq=33 Win=0 Len=0
+ 9 0.168770583    216.21.3.77           10.0.2.4              TLSv1.2  301    Application Data, Encrypted Alert
+10 0.168802033    10.0.2.4              216.21.3.77           TCP      54     57732 → 443 [RST] Seq=33 Win=0 Len=0
+11 2.558322192    10.0.2.4              9.9.9.9               DNS      73     Standard query 0xfbc7 A parlamento.pt
+12 2.558426619    10.0.2.4              9.9.9.9               DNS      73     Standard query 0x1cd9 AAAA parlamento.pt
+13 2.585301271    9.9.9.9               10.0.2.4              DNS      89     Standard query response 0xfbc7 A parlamento.pt A 88.157.195.115
+14 2.625595562    9.9.9.9               10.0.2.4              DNS      123    Standard query response 0x1cd9 AAAA parlamento.pt SOA ns2.parlamento.pt
+15 2.626007543    10.0.2.4              88.157.195.115        ICMP     98     Echo (ping) request  id=0x000e, seq=1/256, ttl=64 (reply in 16)
+16 2.645968622    88.157.195.115        10.0.2.4              ICMP     98     Echo (ping) reply    id=0x000e, seq=1/256, ttl=121 (request in 15)
+17 2.646642968    10.0.2.4              9.9.9.9               DNS      87     Standard query 0xe5df PTR 115.195.157.88.in-addr.arpa
+18 2.692567041    9.9.9.9               10.0.2.4              DNS      157    Standard query response 0xe5df PTR 115.195.157.88.in-addr.arpa PTR parlamento.pt PTR www.parlamento.pt PTR biblioteca.parlamento.pt
+19 3.634304441    10.0.2.4              88.157.195.115        ICMP     98     Echo (ping) request  id=0x000e, seq=2/512, ttl=64 (reply in 20)
+20 3.656005096    88.157.195.115        10.0.2.4              ICMP     98     Echo (ping) reply    id=0x000e, seq=2/512, ttl=121 (request in 19)
+21 4.635584333    10.0.2.4              88.157.195.115        ICMP     98     Echo (ping) request  id=0x000e, seq=3/768, ttl=64 (reply in 22)
+22 4.648954212    88.157.195.115        10.0.2.4              ICMP     98     Echo (ping) reply    id=0x000e, seq=3/768, ttl=121 (request in 21)
+23 5.636701733    10.0.2.4              88.157.195.115        ICMP     98     Echo (ping) request  id=0x000e, seq=4/1024, ttl=64 (reply in 24)
+24 5.650374161    88.157.195.115        10.0.2.4              ICMP     98     Echo (ping) reply    id=0x000e, seq=4/1024, ttl=121 (request in 23)
+25 6.638748234    10.0.2.4              88.157.195.115        ICMP     98     Echo (ping) request  id=0x000e, seq=5/1280, ttl=64 (reply in 26)
+26 6.652163571    88.157.195.115        10.0.2.4              ICMP     98     Echo (ping) reply    id=0x000e, seq=5/1280, ttl=121 (request in 25)
+27 7.644416550    10.0.2.4              88.157.195.115        ICMP     98     Echo (ping) request  id=0x000e, seq=6/1536, ttl=64 (reply in 28)
+28 7.664253139    88.157.195.115        10.0.2.4              ICMP     98     Echo (ping) reply    id=0x000e, seq=6/1536, ttl=121 (request in 27)
+29 8.646247416    10.0.2.4              88.157.195.115        ICMP     98     Echo (ping) request  id=0x000e, seq=7/1792, ttl=64 (reply in 30)
+30 8.659803290    88.157.195.115        10.0.2.4              ICMP     98     Echo (ping) reply    id=0x000e, seq=7/1792, ttl=121 (request in 29)

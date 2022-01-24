@@ -1,0 +1,69 @@
+No Time           Source                Destination           Protocol Length Info
+13 14.841622737   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x2a5f, seq=1/256, ttl=64 (reply in 14)
+14 14.841795525   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a5f, seq=1/256, ttl=64 (request in 13)
+15 15.225100343   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+16 15.846834573   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x2a5f, seq=2/512, ttl=64 (reply in 17)
+17 15.846972719   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a5f, seq=2/512, ttl=64 (request in 16)
+18 15.898314164   0.0.0.0               255.255.255.255       DHCP     342    DHCP Discover - Transaction ID 0xd8287826
+19 16.870834692   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x2a5f, seq=3/768, ttl=64 (reply in 20)
+20 16.871003010   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a5f, seq=3/768, ttl=64 (request in 19)
+21 17.234354313   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+22 17.894834253   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x2a5f, seq=4/1024, ttl=64 (reply in 23)
+23 17.894975611   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a5f, seq=4/1024, ttl=64 (request in 22)
+24 18.918834302   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x2a5f, seq=5/1280, ttl=64 (reply in 25)
+25 18.918969026   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a5f, seq=5/1280, ttl=64 (request in 24)
+26 19.235193666   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+27 19.846798116   HewlettP_5a:7d:16     HewlettP_5a:7b:3f     ARP      42     Who has 172.16.50.254? Tell 172.16.50.1
+28 19.846922923   HewlettP_5a:7b:3f     HewlettP_5a:7d:16     ARP      60     172.16.50.254 is at 00:21:5a:5a:7b:3f
+29 19.942831907   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x2a5f, seq=6/1536, ttl=64 (reply in 30)
+30 19.942959297   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a5f, seq=6/1536, ttl=64 (request in 29)
+31 20.015330791   Cisco_78:94:83        Cisco_78:94:83        LOOP     60     Reply
+32 20.051898080   HewlettP_5a:7b:3f     HewlettP_5a:7d:16     ARP      60     Who has 172.16.50.1? Tell 172.16.50.254
+33 20.051908766   HewlettP_5a:7d:16     HewlettP_5a:7b:3f     ARP      42     172.16.50.1 is at 00:21:5a:5a:7d:16
+34 20.966831607   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x2a5f, seq=7/1792, ttl=64 (reply in 35)
+35 20.966966889   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a5f, seq=7/1792, ttl=64 (request in 34)
+36 21.239825260   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+37 23.244909845   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+38 25.249785396   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+39 26.457580395   172.16.50.1           172.16.51.253         ICMP     98     Echo (ping) request  id=0x2a69, seq=1/256, ttl=64 (reply in 40)
+40 26.457750179   172.16.51.253         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a69, seq=1/256, ttl=64 (request in 39)
+41 27.258588470   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+42 27.462828828   172.16.50.1           172.16.51.253         ICMP     98     Echo (ping) request  id=0x2a69, seq=2/512, ttl=64 (reply in 43)
+43 27.462996517   172.16.51.253         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a69, seq=2/512, ttl=64 (request in 42)
+44 28.486830414   172.16.50.1           172.16.51.253         ICMP     98     Echo (ping) request  id=0x2a69, seq=3/768, ttl=64 (reply in 45)
+45 28.486968211   172.16.51.253         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a69, seq=3/768, ttl=64 (request in 44)
+46 29.259487258   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+47 29.510839123   172.16.50.1           172.16.51.253         ICMP     98     Echo (ping) request  id=0x2a69, seq=4/1024, ttl=64 (reply in 48)
+48 29.510974895   172.16.51.253         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a69, seq=4/1024, ttl=64 (request in 47)
+49 30.027072228   Cisco_78:94:83        Cisco_78:94:83        LOOP     60     Reply
+50 30.534832328   172.16.50.1           172.16.51.253         ICMP     98     Echo (ping) request  id=0x2a69, seq=5/1280, ttl=64 (reply in 51)
+51 30.534970404   172.16.51.253         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a69, seq=5/1280, ttl=64 (request in 50)
+52 31.264393957   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+53 31.558833076   172.16.50.1           172.16.51.253         ICMP     98     Echo (ping) request  id=0x2a69, seq=6/1536, ttl=64 (reply in 54)
+54 31.559002371   172.16.51.253         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a69, seq=6/1536, ttl=64 (request in 53)
+55 32.582831938   172.16.50.1           172.16.51.253         ICMP     98     Echo (ping) request  id=0x2a69, seq=7/1792, ttl=64 (reply in 56)
+56 32.583000674   172.16.51.253         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a69, seq=7/1792, ttl=64 (request in 55)
+57 33.269318746   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+58 35.274237039   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+59 37.283296222   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+60 38.433658289   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=1/256, ttl=64 (reply in 61)
+61 38.433982981   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=1/256, ttl=63 (request in 60)
+62 39.284064965   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+63 39.462833857   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=2/512, ttl=64 (reply in 64)
+64 39.463110009   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=2/512, ttl=63 (request in 63)
+65 40.022472621   Cisco_78:94:83        Cisco_78:94:83        LOOP     60     Reply
+66 40.486827132   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=3/768, ttl=64 (reply in 67)
+67 40.487074719   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=3/768, ttl=63 (request in 66)
+68 41.288969010   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+69 41.510827670   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=4/1024, ttl=64 (reply in 70)
+70 41.511072673   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=4/1024, ttl=63 (request in 69)
+71 42.534826252   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=5/1280, ttl=64 (reply in 72)
+72 42.535115674   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=5/1280, ttl=63 (request in 71)
+73 43.293886675   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+74 43.558828955   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=6/1536, ttl=64 (reply in 75)
+75 43.559106714   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=6/1536, ttl=63 (request in 74)
+76 44.582828935   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=7/1792, ttl=64 (reply in 77)
+77 44.583081271   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=7/1792, ttl=63 (request in 76)
+78 45.298869990   Cisco_78:94:83        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/10/00:1e:bd:78:94:80  Cost = 0  Port = 0x8003
+79 45.606829124   172.16.50.1           172.16.51.1           ICMP     98     Echo (ping) request  id=0x2a70, seq=8/2048, ttl=64 (reply in 80)
+80 45.607073149   172.16.51.1           172.16.50.1           ICMP     98     Echo (ping) reply    id=0x2a70, seq=8/2048, ttl=63 (request in 79)

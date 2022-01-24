@@ -1,0 +1,16 @@
+     No Time           Source                Destination           Protocol Length Info
+     15 23.722413969   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1e24, seq=1/256, ttl=64 (reply in 16)
+     16 23.722584659   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1e24, seq=1/256, ttl=64 (request in 15)
+     17 24.062751414   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/50/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     18 24.732080965   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1e24, seq=2/512, ttl=64 (reply in 19)
+     19 24.732240900   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1e24, seq=2/512, ttl=64 (request in 18)
+     20 25.756089395   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1e24, seq=3/768, ttl=64 (reply in 21)
+     21 25.756224467   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1e24, seq=3/768, ttl=64 (request in 20)
+     22 26.063537190   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/50/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     23 26.780092307   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1e24, seq=4/1024, ttl=64 (reply in 24)
+     24 26.780223398   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1e24, seq=4/1024, ttl=64 (request in 23)
+     25 28.068400055   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/50/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     26 28.827727487   HewlettP_19:09:5c     HewlettP_61:2c:54     ARP      60     Who has 172.16.50.1? Tell 172.16.50.254
+     27 28.827747810   HewlettP_61:2c:54     HewlettP_19:09:5c     ARP      42     172.16.50.1 is at 00:21:5a:61:2c:54
+     28 28.924055655   HewlettP_61:2c:54     HewlettP_19:09:5c     ARP      42     Who has 172.16.50.254? Tell 172.16.50.1
+     29 28.924144981   HewlettP_19:09:5c     HewlettP_61:2c:54     ARP      60     172.16.50.254 is at 00:22:64:19:09:5c

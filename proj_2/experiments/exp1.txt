@@ -1,0 +1,39 @@
+     No Time           Source                Destination           Protocol Length Info
+     24 33.310806486   HewlettP_61:2c:54     Broadcast             ARP      42     Who has 172.16.50.254? Tell 172.16.50.1
+     25 33.310940650   HewlettP_19:09:5c     HewlettP_61:2c:54     ARP      60     172.16.50.254 is at 00:22:64:19:09:5c
+     26 33.310957691   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=1/256, ttl=64 (reply in 27)
+     27 33.311097302   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=1/256, ttl=64 (request in 26)
+     28 34.083043616   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/1/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     29 34.167162937   Cisco_7b:d5:01        Cisco_7b:d5:01        LOOP     60     Reply
+     30 34.314122381   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=2/512, ttl=64 (reply in 31)
+     31 34.314252215   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=2/512, ttl=64 (request in 30)
+     32 35.338119077   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=3/768, ttl=64 (reply in 33)
+     33 35.338281527   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=3/768, ttl=64 (request in 32)
+     34 36.088241158   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/1/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     35 36.362123945   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=4/1024, ttl=64 (reply in 36)
+     36 36.362253569   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=4/1024, ttl=64 (request in 35)
+     37 37.386120781   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=5/1280, ttl=64 (reply in 38)
+     38 37.386252430   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=5/1280, ttl=64 (request in 37)
+     39 38.092847918   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/1/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     40 38.410138709   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=6/1536, ttl=64 (reply in 41)
+     41 38.410272244   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=6/1536, ttl=64 (request in 40)
+     42 38.473037289   HewlettP_19:09:5c     HewlettP_61:2c:54     ARP      60     Who has 172.16.50.1? Tell 172.16.50.254
+     43 38.473044762   HewlettP_61:2c:54     HewlettP_19:09:5c     ARP      42     172.16.50.1 is at 00:21:5a:61:2c:54
+     44 39.434123392   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=7/1792, ttl=64 (reply in 45)
+     45 39.434256928   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=7/1792, ttl=64 (request in 44)
+     46 40.097699609   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/1/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     47 40.408097474   Cisco_7b:d5:01        CDP/VTP/DTP/PAgP/UDLD DTP      60     Dynamic Trunk Protocol
+     48 40.408198673   Cisco_7b:d5:01        CDP/VTP/DTP/PAgP/UDLD DTP      90     Dynamic Trunk Protocol
+     49 40.458120647   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=8/2048, ttl=64 (reply in 50)
+     50 40.458273878   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=8/2048, ttl=64 (request in 49)
+     51 41.482120975   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=9/2304, ttl=64 (reply in 52)
+     52 41.482257304   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=9/2304, ttl=64 (request in 51)
+     53 42.106598427   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/1/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     54 42.506119906   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=10/2560, ttl=64 (reply in 55)
+     55 42.506245969   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=10/2560, ttl=64 (request in 54)
+     56 43.530122120   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=11/2816, ttl=64 (reply in 57)
+     57 43.530256354   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=11/2816, ttl=64 (request in 56)
+     58 44.107526120   Cisco_7b:d5:01        Spanning-tree-(for-bridges)_00 STP      60     Conf. Root = 32768/1/00:1e:14:7b:d5:00  Cost = 0  Port = 0x8001
+     59 44.174732194   Cisco_7b:d5:01        Cisco_7b:d5:01        LOOP     60     Reply
+     60 44.554120353   172.16.50.1           172.16.50.254         ICMP     98     Echo (ping) request  id=0x1ab5, seq=12/3072, ttl=64 (reply in 61)
+     61 44.554280078   172.16.50.254         172.16.50.1           ICMP     98     Echo (ping) reply    id=0x1ab5, seq=12/3072, ttl=64 (request in 60)
